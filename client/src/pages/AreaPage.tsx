@@ -4,6 +4,8 @@ import { BarChart3 } from "lucide-react";
 import { useAppData } from "../i18n";
 import { WorkcenterCard } from "../components/WorkcenterCard";
 import { useOpenEvents } from "../lib/useOpenEvents";
+import { useAlarmActions } from "../lib/useAlarmActions";
+import { AlarmDetailsModal } from "../components/AlarmDetailsModal";
 
 /** Route value used for stations that have no area yet. */
 export const NO_AREA_PARAM = "none";
@@ -13,6 +15,7 @@ export function AreaPage() {
   const { t, areas, statusDefinitions, settings, workcenters } = useAppData();
   const { openFor } = useOpenEvents();
   const navigate = useNavigate();
+  const { busy, toggle, pendingOpen, confirmPending, cancelPending } = useAlarmActions();
 
   const unassigned = areaId === NO_AREA_PARAM;
   const area = unassigned ? null : areas.find((a) => String(a.id) === areaId);
@@ -46,10 +49,14 @@ export function AreaPage() {
               showName={showWorkcenterName}
               openFor={openFor}
               onHeaderClick={() => navigate(`/stations/${encodeURIComponent(wc.workcenterId)}`)}
+              onTileClick={(def, event) => toggle(wc.workcenterId, def, event)}
+              busy={busy}
             />
           ))}
         </div>
       )}
+
+      {pendingOpen && <AlarmDetailsModal definition={pendingOpen.definition} onCancel={cancelPending} onConfirm={confirmPending} />}
     </div>
   );
 }

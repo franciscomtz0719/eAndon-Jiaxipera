@@ -6,6 +6,9 @@ import { LOCKOUT_SETTING_ID } from "../events.js";
 
 export const settingsRouter = Router();
 
+/** Minutes before an open alarm turns from yellow to red on the boards (client/src/lib/settings.ts). */
+const RED_AFTER_SETTING_ID = 6;
+
 settingsRouter.patch(
   "/settings/:settingId",
   asyncHandler(async (req, res) => {
@@ -22,6 +25,10 @@ settingsRouter.patch(
     if (settingId === LOCKOUT_SETTING_ID) {
       const seconds = Number(value);
       if (!Number.isInteger(seconds) || seconds < 5 || seconds > 600) throw new HttpError(400, "value: lockout must be a whole number of seconds between 5 and 600");
+    }
+    if (settingId === RED_AFTER_SETTING_ID) {
+      const minutes = Number(value);
+      if (!Number.isInteger(minutes) || minutes < 1 || minutes > 240) throw new HttpError(400, "value: must be a whole number of minutes between 1 and 240");
     }
 
     res.json(await prisma.settings.update({ where: { settingId }, data: { currentSetting: value } }));

@@ -10,15 +10,10 @@ import { EventsTable } from "../components/EventsTable";
 import { WorkcenterName } from "../components/WorkcenterName";
 import { useToast } from "../components/toastContext";
 import { useOpenEvents } from "../lib/useOpenEvents";
+import { useAlarmActions } from "../lib/useAlarmActions";
 import { useEventChanges } from "../lib/socket";
 
 const PRESSES_REFRESH_MS = 10_000;
-
-function needsDetails(def: StatusDefinition) {
-  const detailsOnStart = def.statusDetailsEnabled === 1 || def.statusDetailsEnabled === 3;
-  const anyField = [def.alarmStartText1Structure, def.alarmStartText2Structure, def.alarmStartText3Structure].some((s) => s?.startsWith("ON"));
-  return detailsOnStart && anyField;
-}
 
 /**
  * Admin view of one station. Normal operation is with the physical buttons; this page is for when a
@@ -29,10 +24,8 @@ export function StationPage() {
   const { t, statusDefinitions, workcenters, areas } = useAppData();
   const toast = useToast();
   const { openFor } = useOpenEvents();
-  const [pendingOpen, setPendingOpen] = useState<StatusDefinition | null>(null);
   const [presses, setPresses] = useState<ButtonPress[]>([]);
   const [history, setHistory] = useState<AlarmEvent[]>([]);
-  const [busy, setBusy] = useState(false);
 
   const workcenter = workcenters.find((wc) => wc.workcenterId === workcenterId);
   const area = areas.find((a) => a.id === workcenter?.areaId);
@@ -53,21 +46,7 @@ export function StationPage() {
   }, [reload]);
   useEventChanges(useCallback((event: AlarmEvent) => event.workcenterId === workcenterId && reload(), [workcenterId, reload]));
 
-  const run = async (action: () => Promise<unknown>, success?: string) => {
-    setBusy(true);
-    try {
-      await action();
-      if (success) toast.success(success);
-      reload();
-    } catch (err) {
-      toast.error(`${t("Rejected", "Rejected")}: ${err instanceof Error ? err.message : "Error"}`);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const openAlarm = (def: StatusDefinition, details?: { detailLocation: string; detailType: string; detailText: string }) =>
-    run(() => api.openAlarm({ workcenterId, statusRow: def.statusRow, ...details }), t("AlarmOpened", "Alarm opened"));
+  const { busy, run, requestOpen, closeAlarm, pendingOpen, confirmPending, cancelPending } = useAlarmActions(reload);
 
   const simulate = (def: StatusDefinition) =>
     run(async () => {
@@ -103,11 +82,11 @@ export function StationPage() {
                   : t("NoOpenAlarm", "No open alarm")}
               </div>
               {event ? (
-                <button className="btn btn-primary" style={{ background: "var(--red-600)", borderColor: "var(--red-600)" }} disabled={busy} onClick={() => run(() => api.closeAlarm(event.id), t("AlarmClosed", "Alarm closed"))}>
+                <button className="btn btn-primary" style={{ background: "var(--red-600)", borderColor: "var(--red-600)" }} disabled={busy} onClick={() => closeAlarm(event)}>
                   {t("CloseAlarm", "Close alarm")}
                 </button>
               ) : (
-                <button className="btn btn-primary" disabled={busy} onClick={() => (needsDetails(def) ? setPendingOpen(def) : openAlarm(def))}>
+                <button className="btn btn-primary" disabled={busy} onClick={() => requestOpen(workcenterId, def)}>
                   {t("OpenAlarm", "Open alarm")}
                 </button>
               )}
@@ -162,15 +141,7 @@ export function StationPage() {
       </section>
 
       {pendingOpen && (
-        <AlarmDetailsModal
-          definition={pendingOpen}
-          onCancel={() => setPendingOpen(null)}
-          onConfirm={(detailLocation, detailType, detailText) => {
-            const def = pendingOpen;
-            setPendingOpen(null);
-            openAlarm(def, { detailLocation, detailType, detailText });
-          }}
-        />
+        <AlarmDetailsModal definition={pendingOpen.definition} onCancel={cancelPending} onConfirm={confirmPending} />
       )}
     </div>
   );

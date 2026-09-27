@@ -4,11 +4,14 @@ import { api } from "../lib/api";
 import { useAppData } from "../i18n";
 import { WorkcenterCard } from "../components/WorkcenterCard";
 import { useOpenEvents } from "../lib/useOpenEvents";
+import { useAlarmActions } from "../lib/useAlarmActions";
+import { AlarmDetailsModal } from "../components/AlarmDetailsModal";
 
 export function Overview() {
   const { t, statusDefinitions, settings, workcenters } = useAppData();
   const { openFor, countFor } = useOpenEvents();
   const navigate = useNavigate();
+  const { busy, toggle, pendingOpen, confirmPending, cancelPending } = useAlarmActions();
 
   const showWorkcenterName = settings.find((s) => s.settingName === "Show workcenter name?")?.currentSetting !== "No";
   const showOnlyActiveSetting = settings.find((s) => s.settingName === "Show only workcenters with alarms in Overivew?");
@@ -53,10 +56,14 @@ export function Overview() {
               showName={showWorkcenterName}
               openFor={openFor}
               onHeaderClick={() => navigate(`/stations/${encodeURIComponent(wc.workcenterId)}`)}
+              onTileClick={(def, event) => toggle(wc.workcenterId, def, event)}
+              busy={busy}
             />
           ))}
         </div>
       )}
+
+      {pendingOpen && <AlarmDetailsModal definition={pendingOpen.definition} onCancel={cancelPending} onConfirm={confirmPending} />}
     </div>
   );
 }

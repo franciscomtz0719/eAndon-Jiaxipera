@@ -21,6 +21,8 @@
   --control-height: 36px;
   --amber-500: #f59e0b;
   --amber-50: #fffbeb;
+  --amber-100: #fef3c7;
+  --amber-700: #b45309;
 }
 
 * {
@@ -403,19 +405,33 @@ input[type="checkbox"] {
   font-size: 0.75rem;
   font-weight: 700;
   min-height: 56px;
-  cursor: pointer;
-  transition: transform 0.1s ease;
   text-align: center;
 }
 
-.status-tile:hover {
+button.status-tile {
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+button.status-tile:hover:not(:disabled) {
   transform: translateY(-1px);
+}
+
+button.status-tile:disabled {
+  cursor: wait;
 }
 
 .status-tile.green {
   background: var(--green-100);
   border: 2px solid var(--green-600);
   color: var(--green-700);
+}
+
+.status-tile.yellow {
+  background: var(--amber-100);
+  border: 2px solid var(--amber-500);
+  color: var(--amber-700);
 }
 
 .status-tile.red {

@@ -43,6 +43,7 @@ const settings = [
   { settingId: 2, settingName: "Show workcenter name?", currentSetting: "Yes", possibleSettings: "Yes|No", defaultSetting: "Yes" },
   { settingId: 3, settingName: "Show only workcenters with alarms in Overivew?", currentSetting: "No", possibleSettings: "Yes|No", defaultSetting: "No" },
   { settingId: 5, settingName: "Seconds before a button press closes the alarm", currentSetting: "30", possibleSettings: "5-600", defaultSetting: "30" },
+  { settingId: 6, settingName: "Minutes before an open alarm turns red", currentSetting: "5", possibleSettings: "1-240", defaultSetting: "5" },
   { settingId: 4, settingName: "Open alarms at shift change", currentSetting: "Keep open", possibleSettings: "Keep open|Close by system", defaultSetting: "Keep open" },
 ];
 
