@@ -268,6 +268,14 @@ const configTexts: { id: string; english: string; spanish: string }[] = [
   { id: "StationPageNote", english: "Normal operation is with the physical buttons. Use this page when a button fails.", spanish: "La operación normal es con los botones físicos. Usa esta página cuando un botón falle." },
   { id: "NoButtonsYet", english: "No buttons configured yet", spanish: "Aún no hay botones configurados" },
   { id: "TranslateNeedsName", english: "Type the Spanish/English name first.", spanish: "Primero escribe el nombre en español/inglés." },
+  // TEST-BUTTONS: remove with module (temporary button-panel test page)
+  { id: "TestButtons.Menu", english: "Test buttons", spanish: "Botoneras de prueba" },
+  { id: "TestButtons.Title", english: "Test button panels", spanish: "Botoneras de prueba" },
+  { id: "TestButtons.Warning", english: "Test tool: each click acts as a physical button press. Its alarms are marked as simulated and do not count in statistics.", spanish: "Herramienta de prueba: cada clic actúa como una pulsación del botón físico. Sus alarmas se marcan como simuladas y no cuentan en estadísticas." },
+  { id: "TestButtons.SelectArea", english: "Area", spanish: "Área" },
+  { id: "TestButtons.LastPress", english: "Last press", spanish: "Última pulsación" },
+  { id: "TestButtons.NoPress", english: "No presses yet", spanish: "Sin pulsaciones" },
+  // end TEST-BUTTONS
 ];
 for (const text of configTexts) {
   if (!localization.some((l) => l.id === text.id)) localization.push({ ...text, translation: text.english });

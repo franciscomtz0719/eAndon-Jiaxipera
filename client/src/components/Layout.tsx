@@ -2,6 +2,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { BarChart3, ClipboardList, LayoutDashboard, LayoutGrid, Settings as SettingsIcon } from "lucide-react";
 import { useAppData, type Language } from "../i18n";
 import { NO_AREA_PARAM } from "../pages/AreaPage";
+import { FlaskConical } from "lucide-react"; // TEST-BUTTONS: remove with module
 
 export function Layout() {
   const { t, language, setLanguage, areas, workcenters } = useAppData();
@@ -38,6 +39,10 @@ export function Layout() {
         </NavLink>
         <NavLink to="/settings" className={({ isActive }) => `sidebar-link${isActive ? " active" : ""}`}>
           <SettingsIcon size={16} /> {t("Settings", "Settings")}
+        </NavLink>
+        {/* TEST-BUTTONS: remove with module */}
+        <NavLink to="/test-buttons" className={({ isActive }) => `sidebar-link${isActive ? " active" : ""}`}>
+          <FlaskConical size={16} /> {t("TestButtons.Menu", "Test buttons")}
         </NavLink>
 
         <div style={{ marginTop: "auto", paddingTop: 16 }}>

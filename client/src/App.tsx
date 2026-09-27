@@ -9,6 +9,7 @@ import { StationPage } from "./pages/StationPage";
 import { Logs } from "./pages/Logs";
 import { Statistics } from "./pages/Statistics";
 import { Settings } from "./pages/Settings";
+import { TestButtonsPage } from "./testButtons/TestButtonsPage"; // TEST-BUTTONS: remove with module
 
 // A data router is required for useBlocker (unsaved-changes prompt in Settings).
 const router = createBrowserRouter([
@@ -22,6 +23,7 @@ const router = createBrowserRouter([
       { path: "logs", element: <Logs /> },
       { path: "statistics", element: <Statistics /> },
       { path: "settings", element: <Settings /> },
+      { path: "test-buttons", element: <TestButtonsPage /> }, // TEST-BUTTONS: remove with module
     ],
   },
 ]);
