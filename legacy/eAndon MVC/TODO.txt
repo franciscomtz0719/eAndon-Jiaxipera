@@ -1,0 +1,22 @@
+﻿
+
+
+- instrukce na predni stranku
+
+- zrezetovani vstupnich dat - naplneni SQL tabulek puvodnimi daty
+
+LOG
+- MTTR, MTBF - zkontrolovat MTBF
+
+----------------------------------
+
+- scrollovaci okno v historii a logu
+
+- prepinac jazyka dolu do Layout
+
+
+AndonTerminal a Overview
+- posledni alarm detaily
+- modal s detaily k alarmum - konec alarmu
+
+

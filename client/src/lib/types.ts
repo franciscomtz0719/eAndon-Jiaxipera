@@ -1,0 +1,148 @@
+export interface Workcenter {
+  workcenterRow: number;
+  workcenterId: string;
+  workcenterName: string;
+  workcenterNameZh: string;
+  areaId: number | null;
+  status1: string;
+  status2: string;
+  status3: string;
+  status4: string;
+  status5: string;
+}
+
+export interface Area {
+  id: number;
+  name: string;
+  sortOrder: number;
+  active: boolean;
+}
+
+export interface Screen {
+  id: number;
+  name: string;
+  areaId: number | null;
+  volume: number;
+  soundEnabled: boolean;
+}
+
+export interface Shift {
+  id: number;
+  name: string;
+  startTime: string;
+  endTime: string;
+  /** ISO weekdays, 1 = Monday … 7 = Sunday */
+  days: number[];
+  active: boolean;
+}
+
+export interface GatewayConfig {
+  host: string;
+  port: number;
+  pollIntervalMs: number;
+  timeoutMs: number;
+  watchdogCycles: number;
+  enabled: boolean;
+}
+
+export type ReadType = "bit" | "counter";
+
+export interface Device {
+  id: number;
+  name: string;
+  workcenterId: string;
+  statusRow: number;
+  modbusUnitId: number | null;
+  registerAddress: number | null;
+  readType: ReadType;
+  active: boolean;
+}
+
+export interface StatusDefinition {
+  statusRow: number;
+  statusName: string;
+  statusEnabled: boolean;
+  statusDetailsEnabled: number;
+  iconName: string | null;
+  alarmStartText1Structure: string | null;
+  alarmStartText2Structure: string | null;
+  alarmStartText3Structure: string | null;
+  alarmEndText1Structure: string | null;
+  alarmEndText2Structure: string | null;
+  alarmEndText3Structure: string | null;
+  alarmEndText4Structure: string | null;
+}
+
+export interface Settings {
+  settingId: number;
+  settingName: string;
+  currentSetting: string;
+  possibleSettings: string;
+  defaultSetting: string;
+}
+
+export interface Localization {
+  id: string;
+  english: string;
+  spanish: string;
+  translation: string;
+}
+
+export interface AndonLog {
+  id: number;
+  workcenterId: string;
+  workcenterName: string | null;
+  statusIndex: number;
+  alarmName: string | null;
+  oldStatus: string;
+  newStatus: string;
+  changeDateTime: string;
+  alarmStartTime: string | null;
+  alarmEndTime: string | null;
+  alarmStartText1: string | null;
+  alarmStartText2: string | null;
+  alarmStartText3: string | null;
+}
+
+export interface AlarmHistoryEntry {
+  alarmId: number;
+  alarmName: string | null;
+  alarmStartTime: string | null;
+  alarmEndTime: string | null;
+  durationMinutes: number;
+  alarmStartText1: string | null;
+  alarmStartText2: string | null;
+  alarmStartText3: string | null;
+}
+
+export interface Bootstrap {
+  statusDefinitions: StatusDefinition[];
+  settings: Settings[];
+  localization: Localization[];
+  areas: Area[];
+  workcenters: Workcenter[];
+}
+
+export interface StatisticsSummary {
+  totalAlarms: number;
+  mttr: number;
+  mtbf: number;
+  workcenterStatistics: { workcenterId: string; workcenterName: string; workcenterNameZh: string; numberOfAlarms: number }[];
+}
+
+export interface StatisticsBreakdown {
+  departmentStatistics: { statusRow: number; departmentName: string; numberOfAlarms: number; percentageOfTotal: number }[];
+  alarmLocationStatistics: { alarmLocation: string; numberOfAlarms: number; percentageOfTotal: number }[];
+  alarmTypeStatistics: { alarmType: string; numberOfAlarms: number; percentageOfTotal: number }[];
+}
+
+export function decodeStatus(raw: string) {
+  const parts = raw.split("|");
+  return {
+    color: parts[0] ?? "green",
+    timestamp: parts[1] ?? null,
+    dropdown1: parts[2] ?? "",
+    dropdown2: parts[3] ?? "",
+    textField: parts[4] ?? "",
+  };
+}

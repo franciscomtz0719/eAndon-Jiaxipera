@@ -1,0 +1,12 @@
+{
+  "name": "eandon-web",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -k -n API,UI -c cyan,magenta \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "setup": "npm install --prefix server && npm install --prefix client && npm run --prefix server db:migrate && npm run --prefix server seed",
+    "build": "npm run build --prefix server && npm run build --prefix client"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
+}

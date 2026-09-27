@@ -1,0 +1,37 @@
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { AppDataProvider } from "./i18n";
+import { ToastProvider } from "./components/Toast";
+import { Layout } from "./components/Layout";
+import { Home } from "./pages/Home";
+import { AreaPage } from "./pages/AreaPage";
+import { Overview } from "./pages/Overview";
+import { Terminal } from "./pages/Terminal";
+import { Logs } from "./pages/Logs";
+import { Statistics } from "./pages/Statistics";
+import { Settings } from "./pages/Settings";
+
+// A data router is required for useBlocker (unsaved-changes prompt in Settings).
+const router = createBrowserRouter([
+  {
+    element: <Layout />,
+    children: [
+      { index: true, element: <Home /> },
+      { path: "areas/:areaId", element: <AreaPage /> },
+      { path: "overview", element: <Overview /> },
+      { path: "terminal/:workcenterId", element: <Terminal /> },
+      { path: "logs", element: <Logs /> },
+      { path: "statistics", element: <Statistics /> },
+      { path: "settings", element: <Settings /> },
+    ],
+  },
+]);
+
+export default function App() {
+  return (
+    <AppDataProvider>
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
+    </AppDataProvider>
+  );
+}

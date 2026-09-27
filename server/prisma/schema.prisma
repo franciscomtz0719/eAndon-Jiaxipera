@@ -1,0 +1,146 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Workcenter {
+  workcenterRow  Int    @id @map("workcenter_row")
+  workcenterId   String @unique @map("workcenter_id")
+  workcenterName String @map("workcenter_name")
+  workcenterNameZh String @default("") @map("workcenter_name_zh")
+  areaId         Int?   @map("area_id")
+  area           Area?  @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  devices        Device[]
+  status1        String @default("green")
+  status2        String @default("green")
+  status3        String @default("green")
+  status4        String @default("green")
+  status5        String @default("green")
+
+  @@map("workcenters")
+}
+
+model StatusDefinition {
+  statusRow                Int     @id @map("status_row")
+  statusName               String  @map("status_name")
+  statusEnabled             Boolean @map("status_enabled")
+  statusDetailsEnabled      Int     @map("status_details_enabled")
+  iconName                  String? @map("icon_name")
+  alarmStartText1Structure  String? @map("alarm_start_text1_structure")
+  alarmStartText2Structure  String? @map("alarm_start_text2_structure")
+  alarmStartText3Structure  String? @map("alarm_start_text3_structure")
+  alarmEndText1Structure    String? @map("alarm_end_text1_structure")
+  alarmEndText2Structure    String? @map("alarm_end_text2_structure")
+  alarmEndText3Structure    String? @map("alarm_end_text3_structure")
+  alarmEndText4Structure    String? @map("alarm_end_text4_structure")
+
+  @@map("status_definitions")
+}
+
+model AndonLog {
+  id              Int       @id @default(autoincrement())
+  workcenterId    String    @map("workcenter_id")
+  workcenterName  String?   @map("workcenter_name")
+  statusIndex     Int       @map("status_index")
+  alarmName       String?   @map("alarm_name")
+  oldStatus       String    @map("old_status")
+  newStatus       String    @map("new_status")
+  changeDateTime  DateTime  @map("change_date_time")
+  alarmStartTime  DateTime? @map("alarm_start_time")
+  alarmEndTime    DateTime? @map("alarm_end_time")
+  alarmStartText1 String?   @map("alarm_start_text1")
+  alarmStartText2 String?   @map("alarm_start_text2")
+  alarmStartText3 String?   @map("alarm_start_text3")
+  alarmEndText1   String?   @map("alarm_end_text1")
+  alarmEndText2   String?   @map("alarm_end_text2")
+  alarmEndText3   String?   @map("alarm_end_text3")
+  alarmEndText4   String?   @map("alarm_end_text4")
+
+  @@map("andon_logs")
+}
+
+model Settings {
+  settingId        Int    @id @map("setting_id")
+  settingName      String @map("setting_name")
+  currentSetting   String @map("current_setting")
+  possibleSettings String @map("possible_settings")
+  defaultSetting   String @map("default_setting")
+
+  @@map("settings")
+}
+
+model Localization {
+  id          String @id
+  english     String
+  spanish     String @default("")
+  translation String
+
+  @@map("localization")
+}
+
+model Area {
+  id          Int          @id @default(autoincrement())
+  name        String
+  sortOrder   Int          @default(0) @map("sort_order")
+  active      Boolean      @default(true)
+  workcenters Workcenter[]
+  screens     Screen[]
+
+  @@map("areas")
+}
+
+/// A TV. Each mini PC / Android box opens /tv/:id; what it shows is configured here.
+model Screen {
+  id           Int     @id @default(autoincrement())
+  name         String
+  areaId       Int?    @map("area_id")
+  area         Area?   @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  volume       Int     @default(80)
+  soundEnabled Boolean @default(true) @map("sound_enabled")
+
+  @@map("screens")
+}
+
+model Shift {
+  id        Int     @id @default(autoincrement())
+  name      String
+  startTime String  @map("start_time") // "HH:MM"; a shift ending before it starts crosses midnight
+  endTime   String  @map("end_time")
+  days      String  @default("1,2,3,4,5") // ISO weekdays, 1 = Monday … 7 = Sunday
+  active    Boolean @default(true)
+
+  @@map("shifts")
+}
+
+/// Single-row table (id = 1) with the Panel Server connection used by the acquisition service.
+model GatewayConfig {
+  id             Int     @id @default(1)
+  host           String  @default("")
+  port           Int     @default(502)
+  pollIntervalMs Int     @default(300) @map("poll_interval_ms")
+  timeoutMs      Int     @default(1000) @map("timeout_ms")
+  watchdogCycles Int     @default(20) @map("watchdog_cycles")
+  enabled        Boolean @default(false)
+
+  @@map("gateway_config")
+}
+
+/// A wireless button: which station and department it calls, and where the gateway exposes it.
+model Device {
+  id              Int        @id @default(autoincrement())
+  name            String     @default("")
+  workcenterId    String     @map("workcenter_id")
+  workcenter      Workcenter @relation(fields: [workcenterId], references: [workcenterId], onDelete: Cascade, onUpdate: Cascade)
+  statusRow       Int        @map("status_row") // department = StatusDefinition.statusRow
+  modbusUnitId    Int?       @map("modbus_unit_id")
+  registerAddress Int?       @map("register_address")
+  readType        String     @default("bit") @map("read_type") // "bit" | "counter"
+  active          Boolean    @default(true)
+
+  @@unique([modbusUnitId, registerAddress])
+  @@map("devices")
+}
