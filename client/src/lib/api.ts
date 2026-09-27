@@ -7,6 +7,7 @@ import type {
   GatewayConfig,
   Screen,
   Shift,
+  StartDetails,
   StatisticsBreakdown,
   StatisticsSummary,
   Workcenter,
@@ -65,10 +66,8 @@ export const api = {
   ) => request(`/status-definitions/${statusRow}`, { method: "PATCH", body: JSON.stringify(data) }),
   moveStatusDefinition: (statusRow: number, direction: "up" | "down") =>
     request(`/status-definitions/${statusRow}/move`, { method: "POST", body: JSON.stringify({ direction }) }),
-  updateStartDetails: (
-    statusIndex: number,
-    data: { failureLocationOptions: string; failureTypeOptions: string; detailsTextOptions: string },
-  ) => request(`/status-definitions/index/${statusIndex}/start-details`, { method: "PATCH", body: JSON.stringify(data) }),
+  updateAlarmDetails: (statusRow: number, details: StartDetails) =>
+    request(`/status-definitions/${statusRow}/details`, { method: "PUT", body: JSON.stringify(details) }),
 
   updateSetting: (settingId: number, value: string) =>
     request(`/settings/${settingId}`, { method: "PATCH", body: JSON.stringify({ value }) }),

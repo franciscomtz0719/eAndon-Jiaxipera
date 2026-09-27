@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../db.js";
 import type { AlarmEvent, Workcenter } from "@prisma/client";
 import { asyncHandler, HttpError, parse } from "../http.js";
+import { NOT_SELECTED } from "../detailStructure.js";
 
 export const statisticsRouter = Router();
 
@@ -83,9 +84,6 @@ statisticsRouter.get(
     res.json({ totalAlarms, mttr, mtbf, workcenterStatistics });
   }),
 );
-
-// Value stored when the operator left a failure dropdown unselected.
-const NOT_SELECTED = "-- N/A --";
 
 function percentageBreakdown(items: (string | null | undefined)[], total: number) {
   const counts = new Map<string, number>();

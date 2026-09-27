@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { asyncHandler, HttpError, parse } from "../http.js";
+import { startDetailsData, startDetailsOf, startDetailsSchema } from "../detailStructure.js";
 
 export const statusDefinitionsRouter = Router();
 
@@ -13,9 +14,6 @@ const definitionBody = z.object({
   statusDetailsEnabled: z.number().int().min(0).max(3),
   iconName: z.string().trim().max(60).regex(/^[a-z0-9 -]*$/, "Expected Font Awesome classes, e.g. \"fa fa-cogs\""),
 });
-
-// Alarm details: "OFF", or "ON" optionally followed by "|option|option…".
-const detailStructure = z.string().max(2000).regex(/^(OFF|ON(\|.*)?)$/, 'Expected "OFF" or "ON|option|option…"');
 
 statusDefinitionsRouter.patch("/status-definitions/:statusRow", asyncHandler(async (req, res) => {
   const { statusRow } = parse(rowParams, req.params);
@@ -44,36 +42,25 @@ statusDefinitionsRouter.post("/status-definitions/:statusRow/move", asyncHandler
   const neighbor = await prisma.statusDefinition.findUnique({ where: { statusRow: neighborRow } });
   if (!neighbor) throw new HttpError(400, "Cannot move status further");
 
-  const swapFields = { statusName: current.statusName, statusEnabled: current.statusEnabled, statusDetailsEnabled: current.statusDetailsEnabled, iconName: current.iconName };
-  const neighborFields = { statusName: neighbor.statusName, statusEnabled: neighbor.statusEnabled, statusDetailsEnabled: neighbor.statusDetailsEnabled, iconName: neighbor.iconName };
+  // Every setting of the department moves with it; only statusRow (the button position) stays.
+  const fieldsOf = ({ statusRow: _row, ...fields }: typeof current) => fields;
 
   await prisma.$transaction([
-    prisma.statusDefinition.update({ where: { statusRow }, data: neighborFields }),
-    prisma.statusDefinition.update({ where: { statusRow: neighborRow }, data: swapFields }),
+    prisma.statusDefinition.update({ where: { statusRow }, data: fieldsOf(neighbor) }),
+    prisma.statusDefinition.update({ where: { statusRow: neighborRow }, data: fieldsOf(current) }),
   ]);
 
   res.json({ success: true });
 }));
 
-statusDefinitionsRouter.patch("/status-definitions/index/:statusIndex/start-details", asyncHandler(async (req, res) => {
-  const { statusIndex } = parse(z.object({ statusIndex: z.coerce.number().int().min(0).max(4) }), req.params);
-  const { failureLocationOptions, failureTypeOptions, detailsTextOptions } = parse(
-    z.object({ failureLocationOptions: detailStructure, failureTypeOptions: detailStructure, detailsTextOptions: detailStructure }),
-    req.body,
-  );
+// Alarm details editor: the whole configuration of one department, already parsed (see detailStructure.ts).
+statusDefinitionsRouter.put("/status-definitions/:statusRow/details", asyncHandler(async (req, res) => {
+  const { statusRow } = parse(rowParams, req.params);
+  const details = parse(startDetailsSchema, req.body);
 
-  const statusRow = statusIndex + 1;
-  const existing = await prisma.statusDefinition.findUnique({ where: { statusRow } });
-  if (!existing) throw new HttpError(404, "Status definition not found");
+  const current = await prisma.statusDefinition.findUnique({ where: { statusRow } });
+  if (!current) throw new HttpError(404, "Status definition not found");
 
-  await prisma.statusDefinition.update({
-    where: { statusRow },
-    data: {
-      alarmStartText1Structure: failureLocationOptions,
-      alarmStartText2Structure: failureTypeOptions,
-      alarmStartText3Structure: detailsTextOptions,
-    },
-  });
-
-  res.json({ success: true });
+  const updated = await prisma.statusDefinition.update({ where: { statusRow }, data: startDetailsData(current, details) });
+  res.json({ ...updated, startDetails: startDetailsOf(updated) });
 }));

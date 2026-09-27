@@ -141,7 +141,7 @@ export function StationPage() {
       </section>
 
       {pendingOpen && (
-        <AlarmDetailsModal definition={pendingOpen.definition} onCancel={cancelPending} onConfirm={confirmPending} />
+        <AlarmDetailsModal details={pendingOpen.definition.startDetails} onCancel={cancelPending} onConfirm={confirmPending} />
       )}
     </div>
   );

@@ -75,9 +75,10 @@ Las alarmas viven en `AlarmEvent` (abierta/cerrada) y cada pulsación en `Button
 - `StatusDefinition` sí intercambia campos al mover (ver E-1).
 
 ### E-3: Detalle de StatusDefinition
-Formato `"ON|opt1|opt2"` / `"OFF"`. Hoy no hay un helper compartido: se parsea en
-`parseStructure` (`client/src/components/AlarmDetailsModal.tsx`) y con `split("|")[0] === "ON"`
-inline en `server/src/routes/status.ts`. Antes de agregar más usos, centralizarlo en un helper.
+Formato guardado `"ON|opt1|opt2"` / `"OFF|opt1|opt2"` (al apagar un campo se conservan sus opciones).
+Solo `server/src/detailStructure.ts` lo parsea y lo escribe. `bootstrap` entrega `startDetails` ya parseado
+y el editor guarda con `PUT /status-definitions/:statusRow/details` (JSON validado con zod).
+El client **nunca** parsea `|`; no agregar parseos en otro lado.
 
 ### E-4: Localización
 - Todo texto de UI **nuevo** va vía `t()` / `tOption()`, con su fila en `seed.ts`.

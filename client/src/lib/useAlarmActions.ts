@@ -1,16 +1,14 @@
 import { useState } from "react";
 import { api } from "./api";
-import type { AlarmEvent, StatusDefinition } from "./types";
+import type { AlarmEvent, DetailValues, StartDetails, StatusDefinition } from "./types";
 import { useAppData } from "../i18n";
 import { useToast } from "../components/toastContext";
 
-function needsDetails(def: StatusDefinition) {
-  const detailsOnStart = def.statusDetailsEnabled === 1 || def.statusDetailsEnabled === 3;
-  const anyField = [def.alarmStartText1Structure, def.alarmStartText2Structure, def.alarmStartText3Structure].some((s) => s?.startsWith("ON"));
-  return detailsOnStart && anyField;
+export function needsDetails({ askOnOpen, location, type, text }: StartDetails) {
+  return askOnOpen && (location.enabled || type.enabled || text.enabled);
 }
 
-type Details = { detailLocation: string; detailType: string; detailText: string };
+type Details = { detailLocation?: string; detailType?: string; detailText?: string };
 
 /**
  * Open and close alarms from a computer (the server applies the rule in events.ts: open with optional
@@ -40,7 +38,7 @@ export function useAlarmActions(onDone?: () => void) {
     run(() => api.openAlarm({ workcenterId, statusRow: def.statusRow, ...details }), t("AlarmOpened", "Alarm opened"));
 
   const requestOpen = (workcenterId: string, def: StatusDefinition) =>
-    needsDetails(def) ? setPendingOpen({ workcenterId, definition: def }) : openAlarm(workcenterId, def);
+    needsDetails(def.startDetails) ? setPendingOpen({ workcenterId, definition: def }) : openAlarm(workcenterId, def);
 
   const closeAlarm = (event: AlarmEvent) => run(() => api.closeAlarm(event.id), t("AlarmClosed", "Alarm closed"));
 
@@ -48,10 +46,15 @@ export function useAlarmActions(onDone?: () => void) {
   const toggle = (workcenterId: string, def: StatusDefinition, event?: AlarmEvent) =>
     event ? closeAlarm(event) : requestOpen(workcenterId, def);
 
-  const confirmPending = (detailLocation: string, detailType: string, detailText: string) => {
+  const confirmPending = ({ location, type, text }: DetailValues) => {
     if (!pendingOpen) return;
     setPendingOpen(null);
-    openAlarm(pendingOpen.workcenterId, pendingOpen.definition, { detailLocation, detailType, detailText });
+    // Empty values are left out: the server stores them as "not given".
+    openAlarm(pendingOpen.workcenterId, pendingOpen.definition, {
+      detailLocation: location || undefined,
+      detailType: type || undefined,
+      detailText: text.trim() || undefined,
+    });
   };
 
   return { busy, run, requestOpen, closeAlarm, toggle, pendingOpen, confirmPending, cancelPending: () => setPendingOpen(null) };

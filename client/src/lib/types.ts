@@ -53,19 +53,34 @@ export interface Device {
   active: boolean;
 }
 
+export interface DetailField {
+  enabled: boolean;
+  options: string[];
+}
+
+/** Alarm details of a department, parsed by the server (server/src/detailStructure.ts). */
+export interface StartDetails {
+  /** Whether opening an alarm from a computer shows the details dialog. */
+  askOnOpen: boolean;
+  location: DetailField;
+  type: DetailField;
+  text: { enabled: boolean };
+}
+
+/** What the operator entered in the details dialog; empty string = nothing selected / typed. */
+export interface DetailValues {
+  location: string;
+  type: string;
+  text: string;
+}
+
 export interface StatusDefinition {
   statusRow: number;
   statusName: string;
   statusEnabled: boolean;
   statusDetailsEnabled: number;
   iconName: string | null;
-  alarmStartText1Structure: string | null;
-  alarmStartText2Structure: string | null;
-  alarmStartText3Structure: string | null;
-  alarmEndText1Structure: string | null;
-  alarmEndText2Structure: string | null;
-  alarmEndText3Structure: string | null;
-  alarmEndText4Structure: string | null;
+  startDetails: StartDetails;
 }
 
 export interface Settings {

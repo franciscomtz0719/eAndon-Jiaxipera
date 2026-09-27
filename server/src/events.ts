@@ -1,6 +1,7 @@
 import type { AlarmEvent } from "@prisma/client";
 import { prisma } from "./db.js";
 import { HttpError } from "./http.js";
+import { detailsProblem } from "./detailStructure.js";
 import { emitEventChanged } from "./realtime.js";
 
 export type PressSource = "button" | "simulated";
@@ -116,6 +117,8 @@ export function openFromComputer(input: {
 }): Promise<AlarmEvent> {
   return serialized(async () => {
     const { workcenter, department } = await resolveTarget(input.workcenterId, input.statusRow);
+    const problem = detailsProblem(department, input);
+    if (problem) throw new HttpError(400, problem);
     if (await findOpenEvent(input.workcenterId, input.statusRow)) {
       throw new HttpError(409, "This department already has an open alarm at this station.");
     }

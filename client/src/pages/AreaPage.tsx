@@ -56,7 +56,7 @@ export function AreaPage() {
         </div>
       )}
 
-      {pendingOpen && <AlarmDetailsModal definition={pendingOpen.definition} onCancel={cancelPending} onConfirm={confirmPending} />}
+      {pendingOpen && <AlarmDetailsModal details={pendingOpen.definition.startDetails} onCancel={cancelPending} onConfirm={confirmPending} />}
     </div>
   );
 }

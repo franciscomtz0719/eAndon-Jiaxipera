@@ -4,19 +4,20 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
 import { asyncHandler, idParams, parse } from "../http.js";
 import { closeFromComputer, openFromComputer, registerPress } from "../events.js";
+import { NOT_SELECTED } from "../detailStructure.js";
 
 export const eventsRouter = Router();
 
 const NO_AREA = "none";
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD");
 const statusRow = z.number().int().min(1).max(5);
-// "-- N/A --" is what the details dialog sends when an option was left unselected.
+// Empty means "not given"; NOT_SELECTED is still accepted from clients loaded before it was dropped.
 const detail = z
   .string()
   .trim()
   .max(500)
   .optional()
-  .transform((v) => (v === "-- N/A --" ? undefined : v));
+  .transform((v) => (v && v !== NOT_SELECTED ? v : undefined));
 
 async function workcenterIdsInArea(areaId: number | typeof NO_AREA) {
   const stations = await prisma.workcenter.findMany({ where: { areaId: areaId === NO_AREA ? null : areaId }, select: { workcenterId: true } });

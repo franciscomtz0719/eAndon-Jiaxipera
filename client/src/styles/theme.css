@@ -316,6 +316,59 @@ input[type="checkbox"] {
   color: #fff;
 }
 
+/* Alarm details editor: one block per department, options as chips. */
+.details-department {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+.details-department.block-dirty {
+  padding: 12px 10px;
+}
+
+.detail-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.option-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 6px 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: #f1f5f9;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.option-chip button {
+  display: inline-flex;
+  padding: 2px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.option-chip button:hover {
+  background: var(--border-strong);
+  color: var(--text-main);
+}
+
+.details-preview {
+  margin-top: 4px;
+  padding: 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  background: var(--bg-page);
+}
+
 /* "Add …" forms under each table. */
 .form-row {
   display: flex;

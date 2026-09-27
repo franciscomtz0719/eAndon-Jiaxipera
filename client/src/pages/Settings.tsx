@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useBlocker } from "react-router-dom";
 import { useAppData } from "../i18n";
-import { UnsavedChangesContext } from "../components/settings/unsavedChanges";
+import { DirtySectionsContext, UnsavedChangesContext } from "../components/settings/unsavedChanges";
 import { AreasSection } from "../components/settings/AreasSection";
 import { WorkcentersSection } from "../components/settings/WorkcentersSection";
 import { ScreensSection } from "../components/settings/ScreensSection";
@@ -39,37 +39,39 @@ export function Settings() {
 
   return (
     <UnsavedChangesContext.Provider value={reportDirty}>
-      <div>
-        <h1 className="page-title">{t("Settings", "Settings")}</h1>
+      <DirtySectionsContext.Provider value={dirtySections}>
+        <div>
+          <h1 className="page-title">{t("Settings", "Settings")}</h1>
 
-        <AreasSection />
-        <WorkcentersSection />
-        <ScreensSection />
-        <ShiftsSection />
-        <DevicesSection />
-        <GatewaySection />
-        <AlarmTypesSection />
-        <AlarmDetailsSection />
-        <InterfaceSection />
-        <LocalizationSection />
-      </div>
+          <AreasSection />
+          <WorkcentersSection />
+          <ScreensSection />
+          <ShiftsSection />
+          <DevicesSection />
+          <GatewaySection />
+          <AlarmTypesSection />
+          <AlarmDetailsSection />
+          <InterfaceSection />
+          <LocalizationSection />
+        </div>
 
-      {blocker.state === "blocked" && (
-        <div className="modal-overlay">
-          <div className="modal-panel" style={{ maxWidth: 420 }}>
-            <h3 style={{ marginBottom: 12 }}>{t("UnsavedChanges", "Unsaved changes")}</h3>
-            <p style={{ marginBottom: 16 }}>{t("LeaveWithoutSaving", "You have unsaved changes. Leave without saving?")}</p>
-            <div className="modal-footer">
-              <button type="button" className="btn" onClick={() => blocker.reset()}>
-                {t("Stay", "Stay")}
-              </button>
-              <button type="button" className="btn btn-primary" style={{ background: "var(--red-600)", borderColor: "var(--red-600)" }} onClick={() => blocker.proceed()}>
-                {t("Leave", "Leave without saving")}
-              </button>
+        {blocker.state === "blocked" && (
+          <div className="modal-overlay">
+            <div className="modal-panel" style={{ maxWidth: 420 }}>
+              <h3 style={{ marginBottom: 12 }}>{t("UnsavedChanges", "Unsaved changes")}</h3>
+              <p style={{ marginBottom: 16 }}>{t("LeaveWithoutSaving", "You have unsaved changes. Leave without saving?")}</p>
+              <div className="modal-footer">
+                <button type="button" className="btn" onClick={() => blocker.reset()}>
+                  {t("Stay", "Stay")}
+                </button>
+                <button type="button" className="btn btn-primary" style={{ background: "var(--red-600)", borderColor: "var(--red-600)" }} onClick={() => blocker.proceed()}>
+                  {t("Leave", "Leave without saving")}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </DirtySectionsContext.Provider>
     </UnsavedChangesContext.Provider>
   );
 }
