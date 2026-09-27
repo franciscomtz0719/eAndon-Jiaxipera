@@ -1,55 +1,41 @@
 import { useEffect, useState } from "react";
-import { decodeStatus } from "../lib/types";
-import type { StatusDefinition } from "../lib/types";
+import type { AlarmEvent, StatusDefinition } from "../lib/types";
 
 function formatElapsed(seconds: number): string {
   if (seconds < 60) return `${seconds}s`;
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-  return `${Math.floor(seconds / 3600)}h`;
+  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
 }
 
-export function StatusTile({
-  definition,
-  rawStatus,
-  onClick,
-  readOnly = false,
-}: {
-  definition: StatusDefinition;
-  rawStatus: string;
-  onClick?: () => void;
-  readOnly?: boolean;
-}) {
-  const { color, timestamp } = decodeStatus(rawStatus);
-  const [elapsed, setElapsed] = useState(0);
-
+function useElapsedSeconds(since: string | undefined) {
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    if (color !== "red" || !timestamp) {
-      setElapsed(0);
-      return;
-    }
-    const tick = () => setElapsed(Math.round((Date.now() - new Date(timestamp).getTime()) / 1000));
-    tick();
-    const id = setInterval(tick, 1000);
+    if (!since) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
-  }, [color, timestamp]);
+  }, [since]);
+  return since ? Math.max(0, Math.round((now - new Date(since).getTime()) / 1000)) : 0;
+}
 
-  const className = `status-tile ${color === "red" ? "red" : "green"}`;
+/** One department of a station: green "OK", or red with the time since the alarm opened. */
+export function StatusTile({ definition, event, onClick }: { definition: StatusDefinition; event?: AlarmEvent; onClick?: () => void }) {
+  const elapsed = useElapsedSeconds(event?.openedAt);
+  const className = `status-tile ${event ? "red" : "green"}`;
   const content = (
     <>
       {definition.iconName && <i className={`${definition.iconName} status-tile-icon`} />}
       <span className="status-tile-name">{definition.statusName}</span>
-      <span>{color === "red" ? formatElapsed(elapsed) : "OK"}</span>
+      <span>{event ? formatElapsed(elapsed) : "OK"}</span>
     </>
   );
 
-  if (readOnly) {
+  if (!onClick) {
     return (
       <div className={className} title={definition.statusName} style={{ cursor: "default" }}>
         {content}
       </div>
     );
   }
-
   return (
     <button type="button" className={className} onClick={onClick} title={definition.statusName}>
       {content}

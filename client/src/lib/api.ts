@@ -1,8 +1,8 @@
 import type {
-  AlarmHistoryEntry,
-  AndonLog,
+  AlarmEvent,
   Area,
   Bootstrap,
+  ButtonPress,
   Device,
   GatewayConfig,
   Screen,
@@ -40,19 +40,18 @@ export const api = {
     request(`/workcenters/${row}/move`, { method: "POST", body: JSON.stringify({ direction }) }),
   deleteWorkcenter: (row: number) => request(`/workcenters/${row}`, { method: "DELETE" }),
 
-  setStatus: (
-    workcenterId: string,
-    statusIndex: number,
-    payload: { workcenterName?: string; alarmName?: string; color: "red" | "green"; dropdown1?: string; dropdown2?: string; textField?: string },
-  ) =>
-    request<{ newStatus: string }>(`/workcenters/${encodeURIComponent(workcenterId)}/status/${statusIndex}`, {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
-
-  getLogs: (params: { startDate?: string; endDate?: string; workcenterId?: string; showFinishedAlarms?: boolean }) =>
-    request<AndonLog[]>(`/logs?${new URLSearchParams(cleanParams(params)).toString()}`),
-  getAlarmHistory: (workcenterId: string) => request<AlarmHistoryEntry[]>(`/logs/history?workcenterId=${encodeURIComponent(workcenterId)}`),
+  /** Open alarms, optionally only for one area ("none" = stations without area). */
+  getOpenEvents: (areaId?: string) => request<AlarmEvent[]>(`/events/open${areaId ? `?areaId=${encodeURIComponent(areaId)}` : ""}`),
+  getEvents: (params: { areaId?: string; workcenterId?: string; state?: "open" | "closed"; startDate?: string; endDate?: string; limit?: string }) =>
+    request<AlarmEvent[]>(`/events?${new URLSearchParams(cleanParams(params)).toString()}`),
+  /** Computer (admin page): opens with optional details. */
+  openAlarm: (data: { workcenterId: string; statusRow: number; detailLocation?: string; detailType?: string; detailText?: string }) =>
+    request<AlarmEvent>("/events", { method: "POST", body: JSON.stringify(data) }),
+  closeAlarm: (eventId: number) => request<AlarmEvent>(`/events/${eventId}/close`, { method: "POST" }),
+  /** Test tool: follows the physical button rule (lockout included). */
+  simulatePress: (workcenterId: string, statusRow: number) =>
+    request<{ result: ButtonPress["result"]; event: AlarmEvent }>("/presses", { method: "POST", body: JSON.stringify({ workcenterId, statusRow, source: "simulated" }) }),
+  getPresses: (workcenterId: string, limit = 20) => request<ButtonPress[]>(`/presses?workcenterId=${encodeURIComponent(workcenterId)}&limit=${limit}`),
 
   /** areaId is an area id or "none" for stations without area. */
   getStatistics: (params: { areaId: string; startDate?: string; endDate?: string; workcenterId?: string }) =>

@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom";
 import { LayoutGrid } from "lucide-react";
 import { useAppData } from "../i18n";
-import { countActiveAlarms, useLiveWorkcenters } from "../lib/useLiveWorkcenters";
+import { useOpenEvents } from "../lib/useOpenEvents";
 import { NO_AREA_PARAM } from "./AreaPage";
 
 export function Home() {
-  const { t, areas } = useAppData();
-  const workcenters = useLiveWorkcenters();
+  const { t, areas, workcenters } = useAppData();
+  const { countFor } = useOpenEvents();
 
   const cards = areas
     .filter((area) => area.active)
@@ -19,7 +19,7 @@ export function Home() {
       <h1 className="page-title">eAndon</h1>
       <div className="tiles-grid">
         {cards.map((card) => {
-          const openAlarms = card.stations.reduce((sum, wc) => sum + countActiveAlarms(wc), 0);
+          const openAlarms = card.stations.reduce((sum, wc) => sum + countFor(wc.workcenterId), 0);
           return (
             <Link key={card.key} to={`/areas/${card.key}`} className="wc-card">
               <div className="wc-card-header">

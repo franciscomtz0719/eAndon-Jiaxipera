@@ -32,9 +32,9 @@ Idiomas: UI en inglés con opción de español; nombres de estación en español
 
 ### Estructura
 - `server/src/index.ts` — registro de routers
-- `server/src/routes/*.ts` — workcenters, status, logs, statistics, statusDefinitions,
-  settingsAndLocalization, bootstrap
-- `server/src/db.ts` (PrismaClient), `realtime.ts` (socket), `translate.ts`, `util.ts`
+- `server/src/routes/*.ts` — workcenters, events (alarmas y pulsaciones), statistics, statusDefinitions,
+  settingsAndLocalization, bootstrap, areas, screens, shifts, devices, translate
+- `server/src/db.ts` (PrismaClient), `realtime.ts` (socket), `translate.ts`, `events.ts` (regla de alarmas)
 - `server/src/http.ts` — `asyncHandler`, `parse` (zod), `HttpError`, `errorHandler`: usar en toda ruta nueva o modificada
 - `server/prisma/schema.prisma`, `server/prisma/seed.ts`
 - `client/src/` — pages/, components/, lib/ (api.ts, types.ts, socket.ts), i18n/
@@ -59,16 +59,13 @@ Idiomas: UI en inglés con opción de español; nombres de estación en español
 
 ## Invariantes frágiles (LEER antes de tocar estados o estaciones)
 
-### E-1: Estados codificados por posición
-`Workcenter.status1..status5` guardan strings codificados:
-- activo: `"red|ISO|dropdown1|dropdown2|texto"`
-- inactivo: `"green|ISO"`
-
-El índice N de `statusN` está acoplado a `StatusDefinition.statusRow` y a `AndonLog.statusIndex`.
-- **Nunca reordenar/eliminar StatusDefinition con alarmas activas.**
-- El formato se codifica/decodifica en `server/src/util.ts` (`encodeStatus`/`decodeStatus`) y hay
-  un `decodeStatus` duplicado en `client/src/lib/types.ts`. Si cambia el formato, actualizar ambos.
-  Nunca armar estos strings a mano.
+### E-1: Alarmas = eventos; departamento = posición del botón
+Las alarmas viven en `AlarmEvent` (abierta/cerrada) y cada pulsación en `ButtonPress`.
+`AlarmEvent.statusRow`, `ButtonPress.statusRow` y `Device.statusRow` apuntan a `StatusDefinition.statusRow`
+(la posición del botón), no al nombre.
+- **Nunca reordenar/eliminar StatusDefinition con alarmas abiertas**: mover intercambia campos entre filas.
+- `Workcenter.status1..5` y la tabla `andon_logs` ya **no se usan** (se conservan por historial; no escribir en ellos).
+- Máximo **una alarma abierta por estación + departamento**.
 
 ### E-2: Orden de estaciones
 `Workcenter.workcenterRow` es la llave primaria y también el orden de despliegue. Mover y eliminar
@@ -88,10 +85,13 @@ inline en `server/src/routes/status.ts`. Antes de agregar más usos, centralizar
 - Los ids de la tabla localization los usa el client (incluye el prefijo `"Option.<texto>"`).
   No renombrar ids existentes.
 
-### E-5: Tiempo real
-Todo cambio de estado debe: (1) persistir en BD, (2) escribir `andon_logs`, (3) emitir por
-socket vía `realtime.ts`. Hoy `routes/status.ts` hace los tres en secuencia, sin transacción;
-el objetivo es que ocurran los tres o ninguno. No introducir caminos que omitan alguno.
+### E-5: Un solo lugar para abrir y cerrar alarmas
+Toda apertura o cierre pasa por `server/src/events.ts` (`registerPress`, `openFromComputer`,
+`closeFromComputer`). Ahí se serializan las escrituras (para no abrir dos alarmas a la vez), se
+guarda la pulsación y se emite `event:changed` por socket. No crear ni cerrar `AlarmEvent` en otro lado.
+- **Botón físico**: abre sin preguntas; dentro del bloqueo (ajuste 5, "segundos", desde la apertura)
+  se ignora; después cierra. **Computadora**: abre con detalles opcionales y cierra sin bloqueo.
+- Las alarmas `openedBy = "simulated"` son pruebas y **no cuentan en estadísticas**.
 
 ---
 
@@ -117,7 +117,7 @@ el objetivo es que ocurran los tres o ninguno. No introducir caminos que omitan 
 ## Convenciones
 
 - Respuestas: éxito → datos o `{ success: true, ... }`; error → `{ error: 'mensaje legible' }`.
-- Auditoría: todo cambio de estado de alarma se registra en `andon_logs`.
+- Auditoría: cada alarma queda en `alarm_events` (quién abrió y quién cerró) y cada pulsación en `button_presses`.
 - Deletes: hoy son físicos. Antes de agregar un DELETE nuevo, preguntar si debe ser soft delete.
 - **No inventar opciones de dominio** (ej. opciones de Mantenimiento): las define el usuario.
 

@@ -3,15 +3,15 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { BarChart3 } from "lucide-react";
 import { useAppData } from "../i18n";
 import { WorkcenterCard } from "../components/WorkcenterCard";
-import { useLiveWorkcenters } from "../lib/useLiveWorkcenters";
+import { useOpenEvents } from "../lib/useOpenEvents";
 
 /** Route value used for stations that have no area yet. */
 export const NO_AREA_PARAM = "none";
 
 export function AreaPage() {
   const { areaId } = useParams<{ areaId: string }>();
-  const { t, areas, statusDefinitions, settings } = useAppData();
-  const workcenters = useLiveWorkcenters();
+  const { t, areas, statusDefinitions, settings, workcenters } = useAppData();
+  const { openFor } = useOpenEvents();
   const navigate = useNavigate();
 
   const unassigned = areaId === NO_AREA_PARAM;
@@ -44,7 +44,8 @@ export function AreaPage() {
               workcenter={wc}
               definitions={enabledDefinitions}
               showName={showWorkcenterName}
-              onHeaderClick={() => navigate(`/terminal/${encodeURIComponent(wc.workcenterId)}`)}
+              openFor={openFor}
+              onHeaderClick={() => navigate(`/stations/${encodeURIComponent(wc.workcenterId)}`)}
             />
           ))}
         </div>

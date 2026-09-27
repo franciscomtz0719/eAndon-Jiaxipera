@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
-import type { AndonLog, Workcenter } from "@prisma/client";
+import type { AlarmEvent, Workcenter } from "@prisma/client";
 import { asyncHandler, HttpError, parse } from "../http.js";
 
 export const statisticsRouter = Router();
@@ -32,20 +32,21 @@ async function stationsInScope({ areaId, workcenterId }: StatisticsQuery): Promi
   return [station];
 }
 
-async function loadFinishedLogs(query: StatisticsQuery, stations: Workcenter[]): Promise<AndonLog[]> {
+// Closed alarms of the stations in scope. Simulated alarms are tests and never count.
+async function loadFinishedLogs(query: StatisticsQuery, stations: Workcenter[]): Promise<AlarmEvent[]> {
   const where: Record<string, unknown> = {
-    alarmEndTime: { not: null },
+    state: "closed",
+    openedBy: { not: "simulated" },
     workcenterId: { in: stations.map((wc) => wc.workcenterId) },
   };
-  if (query.startDate) where.alarmStartTime = { gte: new Date(query.startDate) };
+  if (query.startDate) where.openedAt = { gte: new Date(query.startDate) };
   if (query.endDate) {
     const end = new Date(query.endDate);
     end.setHours(23, 59, 59, 999);
-    where.alarmEndTime = { not: null, lte: end };
+    where.closedAt = { lte: end };
   }
 
-  const logs = await prisma.andonLog.findMany({ where });
-  return logs.sort((a, b) => (a.alarmStartTime?.getTime() ?? 0) - (b.alarmStartTime?.getTime() ?? 0));
+  return prisma.alarmEvent.findMany({ where, orderBy: { openedAt: "asc" } });
 }
 
 statisticsRouter.get(
@@ -58,7 +59,7 @@ statisticsRouter.get(
     const totalAlarms = finishedLogs.length;
 
     const mttr = totalAlarms
-      ? finishedLogs.reduce((sum, l) => sum + (l.alarmEndTime!.getTime() - l.alarmStartTime!.getTime()) / 1000, 0) / totalAlarms
+      ? finishedLogs.reduce((sum, l) => sum + (l.closedAt!.getTime() - l.openedAt.getTime()) / 1000, 0) / totalAlarms
       : 0;
 
     let mtbf = 0;
@@ -67,7 +68,7 @@ statisticsRouter.get(
       for (let i = 0; i < finishedLogs.length - 1; i++) {
         const a = finishedLogs[i]!;
         const b = finishedLogs[i + 1]!;
-        gaps.push((b.alarmStartTime!.getTime() - a.alarmEndTime!.getTime()) / 1000);
+        gaps.push((b.openedAt.getTime() - a.closedAt!.getTime()) / 1000);
       }
       mtbf = gaps.reduce((sum, g) => sum + g, 0) / gaps.length;
     }
@@ -105,11 +106,11 @@ statisticsRouter.get(
     const finishedLogs = await loadFinishedLogs(query, stations);
     const totalAlarms = finishedLogs.length;
 
-    // Grouped by button slot (statusIndex = statusRow - 1) under the department's current name,
+    // Grouped by button slot (statusRow) under the department's current name,
     // so renaming a department does not split its history.
     const definitions = await prisma.statusDefinition.findMany({ where: { statusEnabled: true }, orderBy: { statusRow: "asc" } });
     const departmentStatistics = definitions.map((def) => {
-      const numberOfAlarms = finishedLogs.filter((l) => l.statusIndex === def.statusRow - 1).length;
+      const numberOfAlarms = finishedLogs.filter((l) => l.statusRow === def.statusRow).length;
       return {
         statusRow: def.statusRow,
         departmentName: def.statusName,
@@ -118,13 +119,13 @@ statisticsRouter.get(
       };
     });
 
-    const alarmLocationStatistics = percentageBreakdown(finishedLogs.map((l) => l.alarmStartText1), totalAlarms).map((r) => ({
+    const alarmLocationStatistics = percentageBreakdown(finishedLogs.map((l) => l.detailLocation), totalAlarms).map((r) => ({
       alarmLocation: r.key,
       numberOfAlarms: r.numberOfAlarms,
       percentageOfTotal: r.percentageOfTotal,
     }));
 
-    const alarmTypeStatistics = percentageBreakdown(finishedLogs.map((l) => l.alarmStartText2), totalAlarms).map((r) => ({
+    const alarmTypeStatistics = percentageBreakdown(finishedLogs.map((l) => l.detailType), totalAlarms).map((r) => ({
       alarmType: r.key,
       numberOfAlarms: r.numberOfAlarms,
       percentageOfTotal: r.percentageOfTotal,

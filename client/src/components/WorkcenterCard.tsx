@@ -1,6 +1,5 @@
 import { History } from "lucide-react";
-import type { StatusDefinition, Workcenter } from "../lib/types";
-import { STATUS_FIELDS } from "../lib/useLiveWorkcenters";
+import type { AlarmEvent, StatusDefinition, Workcenter } from "../lib/types";
 import { StatusTile } from "./StatusTile";
 import { WorkcenterName } from "./WorkcenterName";
 
@@ -8,11 +7,13 @@ export function WorkcenterCard({
   workcenter,
   definitions,
   showName,
+  openFor,
   onHeaderClick,
 }: {
   workcenter: Workcenter;
   definitions: StatusDefinition[];
   showName: boolean;
+  openFor: (workcenterId: string, statusRow: number) => AlarmEvent | undefined;
   onHeaderClick: () => void;
 }) {
   return (
@@ -32,7 +33,7 @@ export function WorkcenterCard({
       </div>
       <div className="status-tiles">
         {definitions.map((def) => (
-          <StatusTile key={def.statusRow} definition={def} rawStatus={workcenter[STATUS_FIELDS[def.statusRow - 1]!]} readOnly />
+          <StatusTile key={def.statusRow} definition={def} event={openFor(workcenter.workcenterId, def.statusRow)} />
         ))}
       </div>
     </div>

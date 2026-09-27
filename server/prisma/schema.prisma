@@ -144,3 +144,46 @@ model Device {
   @@unique([modbusUnitId, registerAddress])
   @@map("devices")
 }
+
+/// One alarm: opened by a button press or from the computer, closed the same ways (or by the system).
+/// At most one open event per station + department; events.ts serializes writes to keep it that way.
+/// workcenterId has no FK so history survives deleting a station; names are snapshots.
+model AlarmEvent {
+  id             Int           @id @default(autoincrement())
+  workcenterId   String        @map("workcenter_id")
+  workcenterName String        @map("workcenter_name")
+  statusRow      Int           @map("status_row") // department = StatusDefinition.statusRow
+  departmentName String        @map("department_name")
+  state          String // "open" | "closed"
+  openedAt       DateTime      @map("opened_at")
+  closedAt       DateTime?     @map("closed_at")
+  openedBy       String        @map("opened_by") // "button" | "computer" | "simulated" | "migrated"
+  closedBy       String?       @map("closed_by") // same values, plus "system" (shift change)
+  pressCount     Int           @default(0) @map("press_count")
+  lastPressAt    DateTime?     @map("last_press_at")
+  detailLocation String?       @map("detail_location")
+  detailType     String?       @map("detail_type")
+  detailText     String?       @map("detail_text")
+  presses        ButtonPress[]
+
+  @@index([workcenterId, statusRow, state])
+  @@index([openedAt])
+  @@map("alarm_events")
+}
+
+/// Every press that reached the server and what it caused, kept to tune the lockout time.
+model ButtonPress {
+  id             Int         @id @default(autoincrement())
+  deviceId       Int?        @map("device_id")
+  workcenterId   String      @map("workcenter_id")
+  statusRow      Int         @map("status_row")
+  source         String // "button" | "simulated"
+  pressedAt      DateTime    @map("pressed_at")
+  result         String // "opened" | "ignored" | "closed"
+  eventId        Int?        @map("event_id")
+  event          AlarmEvent? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  idempotencyKey String?     @unique @map("idempotency_key")
+
+  @@index([workcenterId, pressedAt])
+  @@map("button_presses")
+}

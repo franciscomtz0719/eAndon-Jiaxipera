@@ -1,4 +1,5 @@
 import type { Server } from "socket.io";
+import type { AlarmEvent } from "@prisma/client";
 
 let io: Server | null = null;
 
@@ -6,6 +7,7 @@ export function setIo(server: Server) {
   io = server;
 }
 
-export function emitStatusUpdate(workcenterId: string, statusIndex: number, newStatus: string) {
-  io?.emit("status:update", { workcenterId, statusIndex, newStatus });
+/** Boards and admin pages upsert open events and drop closed ones. */
+export function emitEventChanged(event: AlarmEvent) {
+  io?.emit("event:changed", event);
 }

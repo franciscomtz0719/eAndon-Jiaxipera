@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
-import type { Workcenter } from "../lib/types";
 import { useAppData } from "../i18n";
-import { AlarmHistoryModal } from "../components/AlarmHistoryModal";
 import { WorkcenterCard } from "../components/WorkcenterCard";
-import { hasActiveAlarm, useLiveWorkcenters } from "../lib/useLiveWorkcenters";
+import { useOpenEvents } from "../lib/useOpenEvents";
 
 export function Overview() {
-  const { t, statusDefinitions, settings } = useAppData();
-  const workcenters = useLiveWorkcenters();
-  const [historyTarget, setHistoryTarget] = useState<Workcenter | null>(null);
+  const { t, statusDefinitions, settings, workcenters } = useAppData();
+  const { openFor, countFor } = useOpenEvents();
+  const navigate = useNavigate();
 
   const showWorkcenterName = settings.find((s) => s.settingName === "Show workcenter name?")?.currentSetting !== "No";
   const showOnlyActiveSetting = settings.find((s) => s.settingName === "Show only workcenters with alarms in Overivew?");
@@ -20,8 +19,7 @@ export function Overview() {
   }, [showOnlyActiveSetting]);
 
   const enabledDefinitions = useMemo(() => statusDefinitions.filter((d) => d.statusEnabled), [statusDefinitions]);
-
-  const visibleWorkcenters = showOnlyActive ? workcenters.filter(hasActiveAlarm) : workcenters;
+  const visibleWorkcenters = showOnlyActive ? workcenters.filter((wc) => countFor(wc.workcenterId) > 0) : workcenters;
 
   const toggleShowOnlyActive = async (checked: boolean) => {
     setShowOnlyActive(checked);
@@ -48,12 +46,17 @@ export function Overview() {
       ) : (
         <div className="tiles-grid">
           {visibleWorkcenters.map((wc) => (
-            <WorkcenterCard key={wc.workcenterId} workcenter={wc} definitions={enabledDefinitions} showName={showWorkcenterName} onHeaderClick={() => setHistoryTarget(wc)} />
+            <WorkcenterCard
+              key={wc.workcenterId}
+              workcenter={wc}
+              definitions={enabledDefinitions}
+              showName={showWorkcenterName}
+              openFor={openFor}
+              onHeaderClick={() => navigate(`/stations/${encodeURIComponent(wc.workcenterId)}`)}
+            />
           ))}
         </div>
       )}
-
-      {historyTarget && <AlarmHistoryModal workcenter={historyTarget} onClose={() => setHistoryTarget(null)} />}
     </div>
   );
 }

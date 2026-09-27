@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { asyncHandler, HttpError, parse } from "../http.js";
+import { LOCKOUT_SETTING_ID } from "../events.js";
 
 export const settingsRouter = Router();
 
@@ -17,6 +18,10 @@ settingsRouter.patch(
     const options = setting.possibleSettings.split("|");
     if (options.length > 1 && !options.includes(value)) {
       throw new HttpError(400, `value: must be one of ${options.join(", ")}`);
+    }
+    if (settingId === LOCKOUT_SETTING_ID) {
+      const seconds = Number(value);
+      if (!Number.isInteger(seconds) || seconds < 5 || seconds > 600) throw new HttpError(400, "value: lockout must be a whole number of seconds between 5 and 600");
     }
 
     res.json(await prisma.settings.update({ where: { settingId }, data: { currentSetting: value } }));

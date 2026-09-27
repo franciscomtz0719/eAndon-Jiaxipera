@@ -5,8 +5,7 @@ import { Server } from "socket.io";
 
 import { bootstrapRouter } from "./routes/bootstrap.js";
 import { workcentersRouter } from "./routes/workcenters.js";
-import { statusRouter } from "./routes/status.js";
-import { logsRouter } from "./routes/logs.js";
+import { eventsRouter } from "./routes/events.js";
 import { statisticsRouter } from "./routes/statistics.js";
 import { statusDefinitionsRouter } from "./routes/statusDefinitions.js";
 import { settingsRouter } from "./routes/settingsAndLocalization.js";
@@ -28,8 +27,7 @@ app.use(express.json());
 
 app.use("/api", bootstrapRouter);
 app.use("/api", workcentersRouter);
-app.use("/api", statusRouter);
-app.use("/api", logsRouter);
+app.use("/api", eventsRouter);
 app.use("/api", statisticsRouter);
 app.use("/api", statusDefinitionsRouter);
 app.use("/api", settingsRouter);

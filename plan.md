@@ -41,7 +41,8 @@ Todo lo demás depende de eso.
   - **Escalamiento automático** por tiempo: el operador no necesita volver a presionar para insistir.
     Capacitación: "una vez llama, otra vez cierra; no insistas, el sistema escala solo".
   - **Confirmación en la TV en menos de 2 s** al abrir ("ABIERTA") y al cerrar ("CERRADA").
-  - **Deshacer cierre** desde pantalla (terminal/tablet), marcado en el registro.
+  - ~~Deshacer cierre~~ (descartado 2026-09-26): si una alarma se cierra por error se abre una nueva;
+    las TVs muestran el estado, así que el error se nota de inmediato.
   - **Registro de cada pulsación** (aceptada, ignorada, cerró) para ajustar el bloqueo con datos reales.
 - [x] **Servicio de adquisición en TypeScript** (librería `modbus-serial`): un solo lenguaje y un solo
       entorno en el mini PC, tipos compartidos con el servidor y bajo las mismas reglas del CLAUDE.md.
@@ -120,11 +121,17 @@ Reordena partes de las Fases 1, 3 y 4. Se trabaja paso por paso, mostrando avanc
 - [x] Botón "Estadísticas" en la página del área.
 
 ### Paso 3: núcleo de eventos (mínimo para el tablero)
-- [ ] Tablas `Evento` y `Pulsacion`; regla abrir → ignorar durante el bloqueo → cerrar.
-- [ ] Una sola ruta para registrar pulsaciones (la misma que usará el servicio Modbus).
-- [ ] Panel de administración: simular pulsación, cerrar a mano, deshacer cierre (marcados en el registro).
-- [ ] Migrar los registros actuales (`andon_logs`) a eventos, para conservarlos como datos de prueba.
-- [ ] Adaptar resumen, registro y estadísticas; `status1..5` deja de usarse.
+Decisiones: bloqueo contado desde la apertura; sin "deshacer cierre"; el **botón físico** abre sin
+preguntas (con bloqueo); la **computadora** abre con detalles opcionales y cierra sin bloqueo;
+"simular pulsación" es solo para pruebas (origen "simulado", fuera de estadísticas).
+- [x] Tablas `Evento` (abierta/cerrada, abierta por / cerrada por, pulsaciones, detalles opcionales)
+      y `Pulsacion` (resultado: abrió / ignorada / cerró; clave para no duplicar).
+- [x] Ajuste "segundos de bloqueo" (30 por defecto, 5–600) en Configuración.
+- [x] Regla única en el servidor + ruta `POST /api/presses` (la usará el servicio Modbus).
+- [x] Computadora: abrir alarma (con detalles opcionales) y cerrar alarma.
+- [x] Página de la estación: estado por departamento, abrir/cerrar, simular pulsación, últimas pulsaciones.
+- [x] Migrar los registros actuales (`andon_logs`) a eventos; la tabla vieja se conserva sin escribirse.
+- [x] Resumen, área, inicio, registro, historial y estadísticas leen eventos; `status1..5` deja de usarse.
 
 ### Paso 4: tablero kiosco `/tv/:id`
 - [ ] Pantalla completa sin menús: nombre del área, hora, indicador de conexión.

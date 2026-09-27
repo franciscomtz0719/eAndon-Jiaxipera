@@ -4,11 +4,6 @@ export interface Workcenter {
   workcenterName: string;
   workcenterNameZh: string;
   areaId: number | null;
-  status1: string;
-  status2: string;
-  status3: string;
-  status4: string;
-  status5: string;
 }
 
 export interface Area {
@@ -88,32 +83,7 @@ export interface Localization {
   translation: string;
 }
 
-export interface AndonLog {
-  id: number;
-  workcenterId: string;
-  workcenterName: string | null;
-  statusIndex: number;
-  alarmName: string | null;
-  oldStatus: string;
-  newStatus: string;
-  changeDateTime: string;
-  alarmStartTime: string | null;
-  alarmEndTime: string | null;
-  alarmStartText1: string | null;
-  alarmStartText2: string | null;
-  alarmStartText3: string | null;
-}
 
-export interface AlarmHistoryEntry {
-  alarmId: number;
-  alarmName: string | null;
-  alarmStartTime: string | null;
-  alarmEndTime: string | null;
-  durationMinutes: number;
-  alarmStartText1: string | null;
-  alarmStartText2: string | null;
-  alarmStartText3: string | null;
-}
 
 export interface Bootstrap {
   statusDefinitions: StatusDefinition[];
@@ -136,13 +106,36 @@ export interface StatisticsBreakdown {
   alarmTypeStatistics: { alarmType: string; numberOfAlarms: number; percentageOfTotal: number }[];
 }
 
-export function decodeStatus(raw: string) {
-  const parts = raw.split("|");
-  return {
-    color: parts[0] ?? "green",
-    timestamp: parts[1] ?? null,
-    dropdown1: parts[2] ?? "",
-    dropdown2: parts[3] ?? "",
-    textField: parts[4] ?? "",
-  };
+/** Who opened or closed an alarm. "migrated" marks alarms imported from the old log table. */
+export type EventActor = "button" | "computer" | "simulated" | "system" | "migrated";
+
+export interface AlarmEvent {
+  id: number;
+  workcenterId: string;
+  workcenterName: string;
+  statusRow: number;
+  departmentName: string;
+  state: "open" | "closed";
+  openedAt: string;
+  closedAt: string | null;
+  openedBy: EventActor;
+  closedBy: EventActor | null;
+  pressCount: number;
+  lastPressAt: string | null;
+  detailLocation: string | null;
+  detailType: string | null;
+  detailText: string | null;
+}
+
+export type PressResult = "opened" | "ignored" | "closed";
+
+export interface ButtonPress {
+  id: number;
+  deviceId: number | null;
+  workcenterId: string;
+  statusRow: number;
+  source: "button" | "simulated";
+  pressedAt: string;
+  result: PressResult;
+  eventId: number | null;
 }
