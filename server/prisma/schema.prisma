@@ -27,6 +27,8 @@ model Workcenter {
 model StatusDefinition {
   statusRow                Int     @id @map("status_row")
   statusName               String  @map("status_name")
+  statusNameZh             String  @default("") @map("status_name_zh")
+  singleButtonOrder        Int     @default(0) @map("single_button_order") // position in the single-button cycle
   statusEnabled             Boolean @map("status_enabled")
   statusDetailsEnabled      Int     @map("status_details_enabled")
   iconName                  String? @map("icon_name")
@@ -77,6 +79,7 @@ model Localization {
   id          String @id
   english     String
   spanish     String @default("")
+  chinese     String @default("")
   translation String
 
   @@map("localization")
@@ -85,6 +88,7 @@ model Localization {
 model Area {
   id          Int          @id @default(autoincrement())
   name        String
+  nameZh      String       @default("") @map("name_zh")
   sortOrder   Int          @default(0) @map("sort_order")
   active      Boolean      @default(true)
   workcenters Workcenter[]
@@ -135,7 +139,7 @@ model Device {
   name            String     @default("")
   workcenterId    String     @map("workcenter_id")
   workcenter      Workcenter @relation(fields: [workcenterId], references: [workcenterId], onDelete: Cascade, onUpdate: Cascade)
-  statusRow       Int        @map("status_row") // department = StatusDefinition.statusRow
+  statusRow       Int?       @map("status_row") // department = StatusDefinition.statusRow; null = single button
   modbusUnitId    Int?       @map("modbus_unit_id")
   registerAddress Int?       @map("register_address")
   readType        String     @default("bit") @map("read_type") // "bit" | "counter"

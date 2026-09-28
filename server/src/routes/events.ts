@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "../db.js";
 import { asyncHandler, idParams, parse } from "../http.js";
-import { closeFromComputer, openFromComputer, registerPress } from "../events.js";
+import { closeFromComputer, currentSelections, openFromComputer, registerPress, registerSinglePress } from "../events.js";
 import { NOT_SELECTED } from "../detailStructure.js";
 
 export const eventsRouter = Router();
@@ -78,6 +78,30 @@ eventsRouter.post(
       req.body,
     );
     res.json(await registerPress(body));
+  }),
+);
+
+// Single-button mode: no department in the press; the server cycles through them (see events.ts).
+eventsRouter.post(
+  "/presses/single",
+  asyncHandler(async (req, res) => {
+    const body = parse(
+      z.object({
+        workcenterId: z.string().trim().min(1).max(50),
+        source: z.enum(["button", "simulated"]),
+        deviceId: z.number().int().positive().optional(),
+        idempotencyKey: z.string().trim().min(1).max(200).optional(),
+      }),
+      req.body,
+    );
+    res.json(await registerSinglePress(body));
+  }),
+);
+
+eventsRouter.get(
+  "/selections",
+  asyncHandler(async (_req, res) => {
+    res.json(currentSelections());
   }),
 );
 

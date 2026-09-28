@@ -2,6 +2,8 @@ import { NavLink, Outlet } from "react-router-dom";
 import { BarChart3, ClipboardList, LayoutDashboard, LayoutGrid, Settings as SettingsIcon } from "lucide-react";
 import { useAppData, type Language } from "../i18n";
 import { NO_AREA_PARAM } from "../pages/AreaPage";
+import { BilingualName } from "./BilingualName";
+import logo from "../assets/jiaxipera_logo.svg";
 import { FlaskConical } from "lucide-react"; // TEST-BUTTONS: remove with module
 
 export function Layout() {
@@ -12,12 +14,15 @@ export function Layout() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
+        <div className="sidebar-logo">
+          <img src={logo} alt="Jiaxipera" />
+        </div>
         <div className="sidebar-brand">eAndon</div>
 
         <div className="sidebar-section-title">{t("AREAS", "Areas")}</div>
         {activeAreas.map((area) => (
           <NavLink key={area.id} to={`/areas/${area.id}`} className={({ isActive }) => `sidebar-link${isActive ? " active" : ""}`}>
-            <LayoutGrid size={16} /> {area.name}
+            <LayoutGrid size={16} /> <BilingualName name={area.name} nameZh={area.nameZh} />
           </NavLink>
         ))}
         {hasUnassigned && (

@@ -133,15 +133,41 @@ preguntas (con bloqueo); la **computadora** abre con detalles opcionales y cierr
 - [x] Migrar los registros actuales (`andon_logs`) a eventos; la tabla vieja se conserva sin escribirse.
 - [x] Resumen, área, inicio, registro, historial y estadísticas leen eventos; `status1..5` deja de usarse.
 
-### Paso 4: tablero kiosco `/tv/:id`
-- [ ] Pantalla completa sin menús: nombre del área, hora, indicador de conexión.
-- [ ] Cuadrícula de estaciones que se ajusta sola, sin scroll; nombre en español + chino.
-- [ ] 4 departamentos por estación con ícono + nombre (nunca solo color).
-- [ ] Alarma abierta en rojo con cronómetro grande; escalada con color distinto, texto "ESCALADA" y parpadeo.
-- [ ] Sin comunicación: todo gris, nunca verde.
-- [ ] Confirmación de 2–3 s al abrir o cerrar ("ABIERTA" / "CERRADA").
-- [ ] Tiempo real por Socket.IO; al reconectar recarga el estado completo.
-- [ ] Legible a 10–15 m; probado a 1920×1080.
+### Trabajo del agente de Multica (traído a main)
+- [x] COMM-3: casillas clicables en área/resumen (abrir/cerrar desde computadora); alarma amarillo → rojo
+      según ajuste 6 ("Minutes before an open alarm turns red").
+- [x] COMM-4: página temporal "Botoneras de prueba" (`/test-buttons`). No se trajo su commit que borraba `plan.md`.
+- [x] COMM-5: editor de detalles de alarma (chips, vista previa), formato procesado solo en
+      `server/src/detailStructure.ts`; al mover un tipo de alarma se mueven también sus detalles.
+
+### Paso 4: tablero de TV en modo kiosco `/tv/:id`
+Decisiones: **solo aparecen las estaciones con alarma** (áreas con 25+ equipos); textos fijos y
+departamentos en **español + chino**.
+- [x] Sin alarmas: "SIN ALARMAS ABIERTAS / 无报警" con número de estaciones (solo con conexión confirmada).
+- [x] Tarjeta por estación con alarma: ID + nombre ES/ZH; solo sus departamentos abiertos, en grande,
+      con cronómetro; amarillo → rojo (ícono + texto, nunca solo color).
+- [x] Orden: alarma más antigua primero (las nuevas se agregan al final); tamaño automático;
+      páginas que rotan cada 10 s si no caben.
+- [x] Al abrir: la tarjeta aparece con parpadeo (< 2 s). Al cerrar: "CERRADA / 已解除" en verde 3 s.
+- [x] Sin comunicación → todo gris con aviso, nunca verde; reconexión automática y recarga de estado.
+- [x] Estado del gateway expuesto por el servidor (se activa en la Fase 2).
+- [x] Configuración de la pantalla y nombres se refrescan en < 1 min; recarga sola al cambiar de versión.
+- [x] Nombre del departamento en chino (editable en Tipos de alarma) y columna de chino en Traducción.
+- [x] Nombre del área en chino (Configuración → Áreas, botón Traducir; nunca desde el chino), mostrado en
+      TV, menú lateral, inicio, página del área y filtros. Área piloto renombrada "Ensable" → "Ensamble / 装配".
+- [x] Logo de Jiaxipera (placa blanca): en el menú lateral y en la TV; arriba del círculo verde sin alarmas,
+      y se desliza al centro del encabezado cuando hay alarmas.
+
+### Paso 4b: modo de botón único (para comparar en el demo)
+Decisiones: coexiste con el modo de 4 botones (lo decide cada botón: sin departamento = botón único);
+cada pulsación cambia el departamento y reinicia el tiempo de confirmación (ajuste, 10 s por defecto);
+al confirmarse abre el llamado, o lo **cierra** si ese departamento ya tenía uno abierto; orden de
+selección por frecuencia de llamados: Producción → Mantenimiento → Materiales → Calidad (editable).
+- [x] Regla en `events.ts` (selección en memoria con temporizador) + `POST /api/presses/single`.
+- [x] Ajuste "segundos para confirmar" (3–60) y columna "Orden en botón único" en Tipos de alarma.
+- [x] Botones sin departamento en Configuración → Botones ("— Botón único —").
+- [x] TV: departamento seleccionado parpadeando con cuenta regresiva ("ABRIR en 7 s" / "CERRAR en 7 s").
+- [x] Botoneras de prueba: sección "Botón único" con un botón por estación.
 
 ### Paso 5: audio, escalamiento y turnos
 - [ ] Sonido al abrirse una alarma y repetición cada N minutos; sonido distinto al escalar (máx. 2–3).

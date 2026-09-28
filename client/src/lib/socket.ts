@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { io } from "socket.io-client";
-import type { AlarmEvent } from "./types";
+import type { AlarmEvent, Selection } from "./types";
 
 export const socket = io({ path: "/socket.io" });
 
@@ -10,6 +10,16 @@ export function useEventChanges(handler: (event: AlarmEvent) => void) {
     socket.on("event:changed", handler);
     return () => {
       socket.off("event:changed", handler);
+    };
+  }, [handler]);
+}
+
+/** Single-button mode: a selection started or changed (selection), or ended (null). */
+export function useSelectionChanges(handler: (change: { workcenterId: string; selection: Selection | null }) => void) {
+  useEffect(() => {
+    socket.on("selection:changed", handler);
+    return () => {
+      socket.off("selection:changed", handler);
     };
   }, [handler]);
 }

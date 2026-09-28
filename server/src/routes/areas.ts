@@ -2,11 +2,13 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { asyncHandler, idParams, parse } from "../http.js";
+import { toChinese } from "../translate.js";
 
 export const areasRouter = Router();
 
 const areaBody = z.object({
   name: z.string().trim().min(1).max(100),
+  nameZh: z.string().trim().max(100),
   sortOrder: z.number().int().min(0).max(10000),
   active: z.boolean(),
 });
@@ -21,9 +23,12 @@ areasRouter.get(
 areasRouter.post(
   "/areas",
   asyncHandler(async (req, res) => {
-    const data = parse(areaBody.partial({ sortOrder: true, active: true }), req.body);
+    const { nameZh, ...data } = parse(areaBody.partial({ nameZh: true, sortOrder: true, active: true }), req.body);
     const last = await prisma.area.findFirst({ orderBy: { sortOrder: "desc" } });
-    const created = await prisma.area.create({ data: { sortOrder: (last?.sortOrder ?? 0) + 1, ...data } });
+    // Like stations: a new area without a Chinese name gets one translated; renaming never re-translates.
+    const created = await prisma.area.create({
+      data: { sortOrder: (last?.sortOrder ?? 0) + 1, ...data, nameZh: nameZh || (await toChinese(data.name)) },
+    });
     res.status(201).json(created);
   }),
 );

@@ -6,6 +6,7 @@ import type {
   Device,
   GatewayConfig,
   Screen,
+  Selection,
   Shift,
   StartDetails,
   StatisticsBreakdown,
@@ -52,6 +53,10 @@ export const api = {
   /** Test tool: follows the physical button rule (lockout included). */
   simulatePress: (workcenterId: string, statusRow: number) =>
     request<{ result: ButtonPress["result"]; event: AlarmEvent }>("/presses", { method: "POST", body: JSON.stringify({ workcenterId, statusRow, source: "simulated" }) }),
+  /** Test tool: single-button press (the server cycles through departments). */
+  simulateSinglePress: (workcenterId: string) =>
+    request<{ result: "selected"; selection: Selection | null }>("/presses/single", { method: "POST", body: JSON.stringify({ workcenterId, source: "simulated" }) }),
+  getSelections: () => request<Selection[]>("/selections"),
   getPresses: (workcenterId: string, limit = 20) => request<ButtonPress[]>(`/presses?workcenterId=${encodeURIComponent(workcenterId)}&limit=${limit}`),
 
   /** areaId is an area id or "none" for stations without area. */
@@ -62,7 +67,7 @@ export const api = {
 
   updateStatusDefinition: (
     statusRow: number,
-    data: { statusName?: string; statusEnabled?: boolean; statusDetailsEnabled?: number; iconName?: string },
+    data: { statusName?: string; statusNameZh?: string; singleButtonOrder?: number; statusEnabled?: boolean; statusDetailsEnabled?: number; iconName?: string },
   ) => request(`/status-definitions/${statusRow}`, { method: "PATCH", body: JSON.stringify(data) }),
   moveStatusDefinition: (statusRow: number, direction: "up" | "down") =>
     request(`/status-definitions/${statusRow}/move`, { method: "POST", body: JSON.stringify({ direction }) }),
@@ -74,7 +79,7 @@ export const api = {
   resetSettings: () => request("/settings/reset", { method: "POST" }),
 
   getAreas: () => request<Area[]>("/areas"),
-  addArea: (name: string) => request<Area>("/areas", { method: "POST", body: JSON.stringify({ name }) }),
+  addArea: (name: string, nameZh: string) => request<Area>("/areas", { method: "POST", body: JSON.stringify({ name, nameZh }) }),
   updateArea: (id: number, data: Partial<Omit<Area, "id">>) => request<Area>(`/areas/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteArea: (id: number) => request(`/areas/${id}`, { method: "DELETE" }),
 
@@ -92,12 +97,16 @@ export const api = {
   updateGateway: (data: Partial<GatewayConfig>) => request<GatewayConfig>("/gateway", { method: "PATCH", body: JSON.stringify(data) }),
 
   getDevices: () => request<Device[]>("/devices"),
-  addDevice: (workcenterId: string, statusRow: number) => request<Device>("/devices", { method: "POST", body: JSON.stringify({ workcenterId, statusRow }) }),
+  addDevice: (workcenterId: string, statusRow: number | null) => request<Device>("/devices", { method: "POST", body: JSON.stringify({ workcenterId, statusRow }) }),
   updateDevice: (id: number, data: Partial<Omit<Device, "id">>) => request<Device>(`/devices/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteDevice: (id: number) => request(`/devices/${id}`, { method: "DELETE" }),
 
-  updateLocalization: (id: string, spanish: string) =>
-    request(`/localization/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify({ spanish }) }),
+  updateLocalization: (id: string, data: { spanish?: string; chinese?: string }) =>
+    request(`/localization/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(data) }),
+
+  getScreen: (id: string) => request<Screen>(`/screens/${encodeURIComponent(id)}`),
+  getHealth: (signal?: AbortSignal) =>
+    request<{ ok: boolean; version: string; gateway: "not_configured" | "unknown" | "ok" | "down" }>("/health", { signal }),
 };
 
 function cleanParams(params: Record<string, string | boolean | undefined>): Record<string, string> {

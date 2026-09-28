@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { BarChart3 } from "lucide-react";
 import { useAppData } from "../i18n";
 import { WorkcenterCard } from "../components/WorkcenterCard";
+import { BilingualName } from "../components/BilingualName";
 import { useOpenEvents } from "../lib/useOpenEvents";
 import { useAlarmActions } from "../lib/useAlarmActions";
 import { AlarmDetailsModal } from "../components/AlarmDetailsModal";
@@ -19,7 +20,7 @@ export function AreaPage() {
 
   const unassigned = areaId === NO_AREA_PARAM;
   const area = unassigned ? null : areas.find((a) => String(a.id) === areaId);
-  const title = unassigned ? t("NoAreaLabel", "No area") : area?.name;
+  const title = unassigned ? t("NoAreaLabel", "No area") : area && <BilingualName name={area.name} nameZh={area.nameZh} />;
 
   const showWorkcenterName = settings.find((s) => s.settingName === "Show workcenter name?")?.currentSetting !== "No";
   const enabledDefinitions = useMemo(() => statusDefinitions.filter((d) => d.statusEnabled), [statusDefinitions]);

@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Languages, Plus, Trash2 } from "lucide-react";
 import { api } from "../../lib/api";
 import type { Area } from "../../lib/types";
 import { useAppData } from "../../i18n";
 import { SettingsSection } from "./SettingsSection";
 import { useRowDrafts } from "./useRowDrafts";
 import { useSettingsActions } from "./useSettingsActions";
+import { useChineseTranslation } from "./useChineseTranslation";
 
 const areaKey = (area: Area) => area.id;
 
@@ -14,6 +15,8 @@ export function AreasSection() {
   const { reportSave, runAction, confirmDelete } = useSettingsActions();
   const drafts = useRowDrafts(areas, areaKey);
   const [newName, setNewName] = useState("");
+  const [newNameZh, setNewNameZh] = useState("");
+  const { translating, translate } = useChineseTranslation();
 
   const save = async () => {
     reportSave(await drafts.save((area, changes) => api.updateArea(area.id, changes), (area) => area.name));
@@ -21,8 +24,9 @@ export function AreasSection() {
   };
 
   const add = async () => {
-    if (await runAction(() => api.addArea(newName), t("ItemAdded", "Added"))) {
+    if (await runAction(() => api.addArea(newName, newNameZh), t("ItemAdded", "Added"))) {
       setNewName("");
+      setNewNameZh("");
       await refresh();
     }
   };
@@ -38,6 +42,7 @@ export function AreasSection() {
         <thead>
           <tr>
             <th>{t("AreaName", "Area name")}</th>
+            <th>{t("AlarmTypeNameZh", "Name (Chinese)")}</th>
             <th>{t("SortOrder", "Order")}</th>
             <th>{t("Active", "Active")}</th>
             <th></th>
@@ -50,6 +55,19 @@ export function AreasSection() {
               <tr key={saved.id} className={drafts.isDirty(saved) ? "row-dirty" : undefined}>
                 <td>
                   <input value={area.name} onChange={(e) => drafts.edit(saved, { name: e.target.value })} />
+                </td>
+                <td>
+                  <div className="input-group">
+                    <input value={area.nameZh} onChange={(e) => drafts.edit(saved, { nameZh: e.target.value })} />
+                    <button
+                      className="btn"
+                      title={t("Translate", "Translate")}
+                      disabled={translating !== null}
+                      onClick={() => translate(`area-${saved.id}`, area.name, (nameZh) => drafts.edit(saved, { nameZh }))}
+                    >
+                      <Languages size={14} /> {t("Translate", "Translate")}
+                    </button>
+                  </div>
                 </td>
                 <td>
                   <input type="number" min={0} className="input-narrow" value={area.sortOrder} onChange={(e) => drafts.edit(saved, { sortOrder: Number(e.target.value) })} />
@@ -72,6 +90,15 @@ export function AreasSection() {
         <div className="form-group">
           <label>{t("AreaName", "Area name")}</label>
           <input value={newName} onChange={(e) => setNewName(e.target.value)} />
+        </div>
+        <div className="form-group">
+          <label>{t("AlarmTypeNameZh", "Name (Chinese)")}</label>
+          <div className="input-group">
+            <input value={newNameZh} onChange={(e) => setNewNameZh(e.target.value)} />
+            <button className="btn" title={t("Translate", "Translate")} disabled={translating !== null} onClick={() => translate("new-area", newName, setNewNameZh)}>
+              <Languages size={14} /> {t("Translate", "Translate")}
+            </button>
+          </div>
         </div>
         <button className="btn btn-primary" onClick={add}>
           <Plus size={14} /> {t("AddArea", "Add area")}

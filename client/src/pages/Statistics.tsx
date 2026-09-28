@@ -13,6 +13,7 @@ import { api } from "../lib/api";
 import type { StatisticsBreakdown, StatisticsSummary } from "../lib/types";
 import { useAppData } from "../i18n";
 import { workcenterNameText } from "../components/WorkcenterName";
+import { bilingualText } from "../lib/bilingual";
 import { NO_AREA_PARAM } from "./AreaPage";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
@@ -85,7 +86,7 @@ export function Statistics() {
           <select value={areaId} onChange={(e) => selectArea(e.target.value)}>
             {activeAreas.map((area) => (
               <option key={area.id} value={area.id}>
-                {area.name}
+                {bilingualText(area.name, area.nameZh)}
               </option>
             ))}
             {hasUnassigned && <option value={NO_AREA_PARAM}>{t("NoAreaLabel", "No area")}</option>}

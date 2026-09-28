@@ -16,7 +16,7 @@ export function DevicesSection() {
   const [devices, setDevices] = useState<Device[]>([]);
   const drafts = useRowDrafts(devices, deviceKey);
   const [newWorkcenterId, setNewWorkcenterId] = useState("");
-  const [newStatusRow, setNewStatusRow] = useState(1);
+  const [newStatusRow, setNewStatusRow] = useState<number | null>(1);
 
   const load = useCallback(() => api.getDevices().then(setDevices).catch(console.error), []);
   // Deleting or renaming a station cascades to its buttons, so reload when the station list changes.
@@ -25,7 +25,8 @@ export function DevicesSection() {
   }, [load, workcenters]);
 
   const departments = statusDefinitions.filter((d) => d.statusEnabled);
-  const departmentName = (statusRow: number) => statusDefinitions.find((d) => d.statusRow === statusRow)?.statusName ?? String(statusRow);
+  const departmentName = (statusRow: number | null) =>
+    statusRow === null ? t("SingleButtonDevice", "— Single button —") : (statusDefinitions.find((d) => d.statusRow === statusRow)?.statusName ?? String(statusRow));
   const label = (device: Device) => `${device.workcenterId} / ${departmentName(device.statusRow)}`;
 
   const save = async () => {
@@ -53,8 +54,10 @@ export function DevicesSection() {
     </select>
   );
 
-  const departmentSelect = (value: number, onChange: (statusRow: number) => void) => (
-    <select className="select" value={value} onChange={(e) => onChange(Number(e.target.value))}>
+  // Empty value = single-button device (one button per station; the department is chosen by pressing).
+  const departmentSelect = (value: number | null, onChange: (statusRow: number | null) => void) => (
+    <select className="select" value={value ?? ""} onChange={(e) => onChange(toOptionalNumber(e.target.value))}>
+      <option value="">{t("SingleButtonDevice", "— Single button —")}</option>
       {departments.map((d) => (
         <option key={d.statusRow} value={d.statusRow}>
           {d.statusName}

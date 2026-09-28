@@ -1,0 +1,398 @@
+/* TV board (/tv/:id): full screen, read from 10–15 m. States always pair color with a glyph and text. */
+
+.tv-root {
+  --tv-bg: #0b1f3a;
+  --tv-panel: #14294a;
+  --tv-text: #ffffff;
+  --tv-muted: #a9b8cf;
+  --tv-yellow: #facc15;
+  --tv-red: #dc2626;
+  --tv-green: #16a34a;
+  --tv-gray: #6b7280;
+  --tv-select: #38bdf8;
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--tv-bg);
+  color: var(--tv-text);
+  font-family: "Inter", "Segoe UI", "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif;
+  overflow: hidden;
+}
+
+.tv-idle,
+.tv-idle * {
+  cursor: none !important;
+}
+
+.tv-bi {
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.tv-zh {
+  font-size: 0.8em;
+  opacity: 0.85;
+}
+
+/* Header */
+.tv-header {
+  display: flex;
+  align-items: center;
+  gap: 2vw;
+  height: 11vh;
+  padding: 0 2vw;
+  background: var(--tv-panel);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+}
+
+.tv-area {
+  /* margin-right: auto pushes the status, counts and clock to the right edge. */
+  margin-right: auto;
+  min-width: 0;
+  /* Leaves the header's center free for the logo. */
+  max-width: calc(50vw - 18vw);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 4.2vh;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.tv-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6vw;
+  padding: 0.6vh 1.2vw;
+  border-radius: 999px;
+  font-size: 2vh;
+  font-weight: 800;
+}
+
+.tv-pill-online {
+  background: rgba(22, 163, 74, 0.18);
+  color: #4ade80;
+}
+
+.tv-pill-offline {
+  background: rgba(107, 114, 128, 0.35);
+  color: #e5e7eb;
+}
+
+.tv-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5vw;
+  font-size: 2.4vh;
+  color: var(--tv-muted);
+}
+
+.tv-count strong {
+  font-size: 3.4vh;
+  color: var(--tv-text);
+}
+
+.tv-clock {
+  font-size: 4.2vh;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Body */
+.tv-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  padding: 1.5vh 1.5vw;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5vh;
+}
+
+.tv-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  gap: 1.5vh 1.2vw;
+}
+
+/* Station card: its border shows the worst state among its alarms. */
+.tv-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: calc(1.6vh * var(--tv-scale)) calc(1.2vw * var(--tv-scale));
+  border-radius: 18px;
+  background: var(--tv-panel);
+  border: 0.5vh solid transparent;
+  gap: calc(1vh * var(--tv-scale));
+  animation: tv-appear 0.35s ease-out;
+}
+
+.tv-card-yellow {
+  border-color: var(--tv-yellow);
+}
+
+.tv-card-red {
+  border-color: var(--tv-red);
+  animation: tv-appear 0.35s ease-out, tv-pulse 1.4s ease-in-out infinite;
+}
+
+.tv-card-closed {
+  border-color: var(--tv-green);
+}
+
+.tv-card-select {
+  border-color: var(--tv-select);
+}
+
+.tv-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 1vw;
+}
+
+.tv-station-id {
+  font-size: calc(4.6vh * var(--tv-scale));
+  font-weight: 900;
+}
+
+.tv-station-name {
+  font-size: calc(3.2vh * var(--tv-scale));
+  color: var(--tv-muted);
+}
+
+.tv-items {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: calc(0.8vh * var(--tv-scale));
+}
+
+.tv-item {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+  padding: calc(1vh * var(--tv-scale)) calc(1vw * var(--tv-scale));
+  border-radius: 12px;
+  font-weight: 800;
+}
+
+.tv-item-yellow {
+  background: var(--tv-yellow);
+  color: #1f2937;
+}
+
+.tv-item-red {
+  background: var(--tv-red);
+  color: #ffffff;
+}
+
+.tv-item-closed {
+  background: var(--tv-green);
+  color: #ffffff;
+}
+
+.tv-glyph {
+  font-size: calc(4vh * var(--tv-scale));
+  width: 1.2em;
+  text-align: center;
+}
+
+.tv-icon {
+  font-size: calc(3.4vh * var(--tv-scale));
+}
+
+/* The timer never gets cut: when space runs out, the department name shortens with "…". */
+.tv-item > * {
+  flex-shrink: 0;
+}
+
+.tv-dept {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: calc(3.4vh * var(--tv-scale));
+}
+
+.tv-dept > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tv-timer {
+  font-size: calc(5.2vh * var(--tv-scale));
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Single-button mode: the department being chosen blinks until the countdown confirms it. */
+.tv-item-select {
+  background: #e0f2fe;
+  color: #0b1f3a;
+  outline: 0.4vh solid var(--tv-select);
+  animation: tv-blink 1s steps(2, jump-none) infinite;
+}
+
+.tv-countdown {
+  font-size: calc(2.6vh * var(--tv-scale));
+}
+
+@keyframes tv-blink {
+  50% {
+    background: var(--tv-select);
+  }
+}
+
+.tv-flash {
+  animation: tv-flash 0.5s ease-in-out 4;
+}
+
+/* Logo on a white plate (its blue would vanish on navy). One element that slides between the
+   center of the "all clear" screen and the center of the header. */
+.tv-logo {
+  position: absolute;
+  left: 50%;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  background: #fff;
+  border-radius: 1.4vh;
+  transform: translateX(-50%);
+  transition: top 0.7s ease, height 0.7s ease, padding 0.7s ease;
+}
+
+.tv-logo img {
+  display: block;
+  height: 100%;
+  width: auto;
+}
+
+.tv-logo-center {
+  top: 15vh;
+  height: 14vh;
+  padding: 2vh 2.4vh;
+}
+
+.tv-logo-header {
+  top: 2vh;
+  height: 7vh;
+  padding: 1vh 1.4vh;
+}
+
+/* All clear: starts right under the logo (which ends at 29vh from the top of the screen). */
+.tv-all-clear {
+  padding-top: 20vh;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2vh;
+  text-align: center;
+}
+
+.tv-check {
+  width: 22vh;
+  height: 22vh;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--tv-green);
+  font-size: 14vh;
+  font-weight: 900;
+}
+
+.tv-all-clear-title {
+  font-size: 7vh;
+  font-weight: 900;
+  color: #4ade80;
+}
+
+.tv-all-clear-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 1vw;
+  font-size: 3vh;
+  color: var(--tv-muted);
+  text-align: left;
+}
+
+/* As tall as the Spanish + Chinese lines next to it. */
+.tv-all-clear-count {
+  font-size: 6.4vh;
+  line-height: 1;
+  font-weight: 800;
+  color: var(--tv-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Lost connection or buttons not responding: never green, everything turns gray. */
+.tv-degraded .tv-card,
+.tv-degraded .tv-item,
+.tv-degraded .tv-grid {
+  filter: grayscale(1) brightness(0.8);
+}
+
+.tv-offline-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1vh;
+  padding: 2vh;
+  border-radius: 18px;
+  background: var(--tv-gray);
+  text-align: center;
+}
+
+.tv-offline-title {
+  font-size: 6vh;
+  font-weight: 900;
+}
+
+.tv-offline-note {
+  font-size: 2.8vh;
+}
+
+.tv-message {
+  margin: auto;
+  max-width: 70vw;
+  text-align: center;
+  font-size: 4vh;
+  font-weight: 800;
+}
+
+@keyframes tv-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes tv-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 1.2vh rgba(220, 38, 38, 0);
+  }
+}
+
+@keyframes tv-flash {
+  50% {
+    filter: brightness(1.5);
+  }
+}

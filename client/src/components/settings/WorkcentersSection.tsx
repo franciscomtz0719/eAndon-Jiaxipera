@@ -6,7 +6,8 @@ import { useAppData } from "../../i18n";
 import { SettingsSection } from "./SettingsSection";
 import { useRowDrafts } from "./useRowDrafts";
 import { toOptionalNumber, useSettingsActions } from "./useSettingsActions";
-import { useToast } from "../toastContext";
+import { useChineseTranslation } from "./useChineseTranslation";
+import { bilingualText } from "../../lib/bilingual";
 
 const workcenterKey = (wc: Workcenter) => wc.workcenterRow;
 
@@ -17,7 +18,7 @@ export function AreaSelect({ areas, value, onChange }: { areas: Area[]; value: n
       <option value="">{t("NoArea", "-- No area --")}</option>
       {areas.map((area) => (
         <option key={area.id} value={area.id}>
-          {area.name}
+          {bilingualText(area.name, area.nameZh)}
         </option>
       ))}
     </select>
@@ -27,29 +28,12 @@ export function AreaSelect({ areas, value, onChange }: { areas: Area[]; value: n
 export function WorkcentersSection() {
   const { t, areas, workcenters, refresh } = useAppData();
   const { reportSave, runAction, confirmDelete } = useSettingsActions();
-  const toast = useToast();
   const drafts = useRowDrafts(workcenters, workcenterKey);
   const [newId, setNewId] = useState("");
   const [newName, setNewName] = useState("");
   const [newNameZh, setNewNameZh] = useState("");
   const [newAreaId, setNewAreaId] = useState<number | null>(null);
-  const [translating, setTranslating] = useState<string | null>(null);
-
-  // Fills the Chinese field from the Spanish/English name; the result stays a pending edit to review and save.
-  const translate = async (key: string, name: string, apply: (zh: string) => void) => {
-    if (!name.trim()) {
-      toast.error(t("TranslateNeedsName", "Type the Spanish/English name first."));
-      return;
-    }
-    setTranslating(key);
-    try {
-      apply(await api.translateToChinese(name));
-    } catch (err) {
-      toast.error(`${t("Rejected", "Rejected")}: ${err instanceof Error ? err.message : "Error"}`);
-    } finally {
-      setTranslating(null);
-    }
-  };
+  const { translating, translate } = useChineseTranslation();
 
   const save = async () => {
     reportSave(await drafts.save((wc, changes) => api.updateWorkcenter(wc.workcenterRow, changes), (wc) => wc.workcenterId));

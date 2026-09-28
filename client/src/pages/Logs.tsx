@@ -4,6 +4,7 @@ import type { AlarmEvent } from "../lib/types";
 import { useAppData } from "../i18n";
 import { EventsTable } from "../components/EventsTable";
 import { workcenterNameText } from "../components/WorkcenterName";
+import { bilingualText } from "../lib/bilingual";
 import { useEventChanges } from "../lib/socket";
 import { NO_AREA_PARAM } from "./AreaPage";
 
@@ -47,7 +48,7 @@ export function Logs() {
             <option value="">{t("All", "All")}</option>
             {areas.map((area) => (
               <option key={area.id} value={area.id}>
-                {area.name}
+                {bilingualText(area.name, area.nameZh)}
               </option>
             ))}
             {hasUnassigned && <option value={NO_AREA_PARAM}>{t("NoAreaLabel", "No area")}</option>}

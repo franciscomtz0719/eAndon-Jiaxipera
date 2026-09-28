@@ -72,7 +72,7 @@ export function ScreensSection() {
                     <input type="checkbox" checked={screen.soundEnabled} onChange={(e) => drafts.edit(saved, { soundEnabled: e.target.checked })} />
                   </td>
                   <td>
-                    <code className="kiosk-url">{`${window.location.origin}/tv/${saved.id}`}</code>
+                    <a className="kiosk-url" href={`/tv/${saved.id}`} target="_blank" rel="noreferrer">{`${window.location.origin}/tv/${saved.id}`}</a>
                   </td>
                   <td className="cell-actions">
                     <button className="btn btn-icon" title={t("Delete", "Delete")} onClick={() => remove(saved)}>

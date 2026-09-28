@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
 import { asyncHandler, HttpError, parse } from "../http.js";
-import { LOCKOUT_SETTING_ID } from "../events.js";
+import { LOCKOUT_SETTING_ID, SINGLE_CONFIRM_SETTING_ID } from "../events.js";
 
 export const settingsRouter = Router();
 
@@ -25,6 +25,10 @@ settingsRouter.patch(
     if (settingId === LOCKOUT_SETTING_ID) {
       const seconds = Number(value);
       if (!Number.isInteger(seconds) || seconds < 5 || seconds > 600) throw new HttpError(400, "value: lockout must be a whole number of seconds between 5 and 600");
+    }
+    if (settingId === SINGLE_CONFIRM_SETTING_ID) {
+      const seconds = Number(value);
+      if (!Number.isInteger(seconds) || seconds < 3 || seconds > 60) throw new HttpError(400, "value: must be a whole number of seconds between 3 and 60");
     }
     if (settingId === RED_AFTER_SETTING_ID) {
       const minutes = Number(value);
@@ -50,7 +54,7 @@ settingsRouter.patch(
   "/localization/:id",
   asyncHandler(async (req, res) => {
     const { id } = parse(z.object({ id: z.string().min(1).max(200) }), req.params);
-    const { spanish } = parse(z.object({ spanish: z.string().max(500) }), req.body);
-    res.json(await prisma.localization.update({ where: { id }, data: { spanish } }));
+    const data = parse(z.object({ spanish: z.string().max(500), chinese: z.string().max(500) }).partial(), req.body);
+    res.json(await prisma.localization.update({ where: { id }, data }));
   }),
 );

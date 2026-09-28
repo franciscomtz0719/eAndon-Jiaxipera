@@ -38,6 +38,7 @@ Idiomas: UI en inglés con opción de español; nombres de estación en español
 - `server/src/http.ts` — `asyncHandler`, `parse` (zod), `HttpError`, `errorHandler`: usar en toda ruta nueva o modificada
 - `server/prisma/schema.prisma`, `server/prisma/seed.ts`
 - `client/src/` — pages/, components/, lib/ (api.ts, types.ts, socket.ts), i18n/
+- `client/src/tv/` — tablero de TV `/tv/:id` (fuera del layout; textos fijos en español + chino vía filas `TV.*`)
 
 ---
 
@@ -93,6 +94,9 @@ guarda la pulsación y se emite `event:changed` por socket. No crear ni cerrar `
 - **Botón físico**: abre sin preguntas; dentro del bloqueo (ajuste 5, "segundos", desde la apertura)
   se ignora; después cierra. **Computadora**: abre con detalles opcionales y cierra sin bloqueo.
 - Las alarmas `openedBy = "simulated"` son pruebas y **no cuentan en estadísticas**.
+- **Botón único** (`registerSinglePress`): cada pulsación pasa al siguiente departamento (`singleButtonOrder`)
+  y reinicia la cuenta (ajuste 7); al confirmarse abre, o cierra si ese departamento ya estaba abierto.
+  La selección vive en memoria y se emite como `selection:changed`. Un `Device` sin `statusRow` es de botón único.
 
 ---
 

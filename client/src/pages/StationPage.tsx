@@ -8,6 +8,7 @@ import { StatusTile } from "../components/StatusTile";
 import { AlarmDetailsModal } from "../components/AlarmDetailsModal";
 import { EventsTable } from "../components/EventsTable";
 import { WorkcenterName } from "../components/WorkcenterName";
+import { bilingualText } from "../lib/bilingual";
 import { useToast } from "../components/toastContext";
 import { useOpenEvents } from "../lib/useOpenEvents";
 import { useAlarmActions } from "../lib/useAlarmActions";
@@ -64,7 +65,7 @@ export function StationPage() {
       <p className="section-note" style={{ marginBottom: 16 }}>
         {area && (
           <>
-            <Link to={`/areas/${area.id}`}>{area.name}</Link> ·{" "}
+            <Link to={`/areas/${area.id}`}>{bilingualText(area.name, area.nameZh)}</Link> ·{" "}
           </>
         )}
         {t("StationPageNote", "Normal operation is with the physical buttons. Use this page when a button fails.")}

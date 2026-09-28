@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../db.js";
-import { asyncHandler, idParams, parse } from "../http.js";
+import { asyncHandler, HttpError, idParams, parse } from "../http.js";
 
 export const screensRouter = Router();
 
@@ -16,6 +16,17 @@ screensRouter.get(
   "/screens",
   asyncHandler(async (_req, res) => {
     res.json(await prisma.screen.findMany({ orderBy: { id: "asc" } }));
+  }),
+);
+
+// Used by the TV boards, which only know their own screen id.
+screensRouter.get(
+  "/screens/:id",
+  asyncHandler(async (req, res) => {
+    const { id } = parse(idParams, req.params);
+    const screen = await prisma.screen.findUnique({ where: { id } });
+    if (!screen) throw new HttpError(404, "Screen not found");
+    res.json(screen);
   }),
 );
 

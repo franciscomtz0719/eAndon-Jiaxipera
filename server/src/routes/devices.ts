@@ -38,7 +38,8 @@ devicesRouter.patch(
 const deviceBody = z.object({
   name: z.string().trim().max(100),
   workcenterId: z.string().trim().min(1),
-  statusRow: z.number().int().min(1).max(5),
+  // null = single-button device (one button per station, the department is chosen by pressing).
+  statusRow: z.number().int().min(1).max(5).nullable(),
   // Modbus unit ids are 1-247; register addresses are 16-bit. Null until the register map is known.
   modbusUnitId: z.number().int().min(1).max(247).nullable(),
   registerAddress: z.number().int().min(0).max(65535).nullable(),
@@ -46,8 +47,8 @@ const deviceBody = z.object({
   active: z.boolean(),
 });
 
-async function assertDepartmentExists(statusRow: number | undefined) {
-  if (statusRow === undefined) return;
+async function assertDepartmentExists(statusRow: number | null | undefined) {
+  if (statusRow === undefined || statusRow === null) return;
   const definition = await prisma.statusDefinition.findUnique({ where: { statusRow } });
   if (!definition) throw new HttpError(400, `statusRow: department ${statusRow} does not exist`);
 }

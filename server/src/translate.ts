@@ -38,4 +38,9 @@ export async function backfillChineseNames() {
       await prisma.workcenter.update({ where: { workcenterRow: wc.workcenterRow }, data: { workcenterNameZh } });
     }
   }
+  const areas = await prisma.area.findMany({ where: { nameZh: "" } });
+  for (const area of areas) {
+    const nameZh = await toChinese(area.name);
+    if (nameZh) await prisma.area.update({ where: { id: area.id }, data: { nameZh } });
+  }
 }

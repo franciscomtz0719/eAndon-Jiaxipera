@@ -13,7 +13,7 @@ export function LocalizationSection() {
   const drafts = useRowDrafts(localization, localizationKey);
 
   const save = async () => {
-    reportSave(await drafts.save((l, { spanish }) => api.updateLocalization(l.id, spanish ?? l.spanish), (l) => l.id));
+    reportSave(await drafts.save((l, { spanish, chinese }) => api.updateLocalization(l.id, { spanish, chinese }), (l) => l.id));
     await refresh();
   };
 
@@ -26,6 +26,7 @@ export function LocalizationSection() {
               <th>ID</th>
               <th>{t("DefaultText", "Default text (English)")}</th>
               <th>{t("LocalizedText", "Localized text (Spanish)")}</th>
+              <th>{t("ChineseText", "Chinese text (TV)")}</th>
             </tr>
           </thead>
           <tbody>
@@ -35,6 +36,9 @@ export function LocalizationSection() {
                 <td>{saved.english}</td>
                 <td>
                   <input value={drafts.valueOf(saved).spanish} onChange={(e) => drafts.edit(saved, { spanish: e.target.value })} />
+                </td>
+                <td>
+                  <input value={drafts.valueOf(saved).chinese} onChange={(e) => drafts.edit(saved, { chinese: e.target.value })} />
                 </td>
               </tr>
             ))}

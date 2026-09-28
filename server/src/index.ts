@@ -14,7 +14,8 @@ import { screensRouter } from "./routes/screens.js";
 import { shiftsRouter } from "./routes/shifts.js";
 import { devicesRouter } from "./routes/devices.js";
 import { translateRouter } from "./routes/translate.js";
-import { errorHandler } from "./http.js";
+import { asyncHandler, errorHandler } from "./http.js";
+import { prisma } from "./db.js";
 import { setIo } from "./realtime.js";
 import { backfillChineseNames } from "./translate.js";
 
@@ -37,7 +38,18 @@ app.use("/api", shiftsRouter);
 app.use("/api", devicesRouter);
 app.use("/api", translateRouter);
 
-app.get("/api/health", (_req, res) => res.json({ ok: true }));
+// Changes on every restart or deploy; TV boards reload themselves when it changes.
+const SERVER_VERSION = new Date().toISOString();
+
+// TV boards poll this to detect a lost connection. "gateway" becomes "ok" / "down" once the
+// acquisition service reports in (phase 2); until then it is "unknown" or "not_configured".
+app.get(
+  "/api/health",
+  asyncHandler(async (_req, res) => {
+    const gateway = await prisma.gatewayConfig.findUnique({ where: { id: 1 } });
+    res.json({ ok: true, version: SERVER_VERSION, gateway: gateway?.enabled ? "unknown" : "not_configured" });
+  }),
+);
 
 app.use(errorHandler);
 

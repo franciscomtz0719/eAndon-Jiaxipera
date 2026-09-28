@@ -14,26 +14,26 @@ const OFF = { alarmEndText1Structure: "OFF", alarmEndText2Structure: "OFF", alar
 
 const statusDefinitions = [
   {
-    statusRow: 1, statusName: "Producción", statusEnabled: true, statusDetailsEnabled: 0, iconName: "fa fa-industry",
+    statusRow: 1, statusName: "Producción", statusNameZh: "生产", singleButtonOrder: 1, statusEnabled: true, statusDetailsEnabled: 0, iconName: "fa fa-industry",
     alarmStartText1Structure: "OFF", alarmStartText2Structure: "OFF", alarmStartText3Structure: "OFF", ...OFF,
   },
   {
-    statusRow: 2, statusName: "Calidad", statusEnabled: true, statusDetailsEnabled: 0, iconName: "fa fa-search",
+    statusRow: 2, statusName: "Calidad", statusNameZh: "质量", singleButtonOrder: 4, statusEnabled: true, statusDetailsEnabled: 0, iconName: "fa fa-search",
     alarmStartText1Structure: "OFF", alarmStartText2Structure: "OFF", alarmStartText3Structure: "OFF", ...OFF,
   },
   {
-    statusRow: 3, statusName: "Mantenimiento", statusEnabled: true, statusDetailsEnabled: 1, iconName: "fa fa-cogs",
+    statusRow: 3, statusName: "Mantenimiento", statusNameZh: "维修", singleButtonOrder: 2, statusEnabled: true, statusDetailsEnabled: 1, iconName: "fa fa-cogs",
     alarmStartText1Structure: "ON|Loading|Robot|Pressing|Machining|Assembly|Welding|Soldering|Cutting|Injection Molding|Extrusion|Painting|Coating|Laser Cutting|Testing|Quality Control|Material Handling|Packaging|Heat Treating|Casting|Forming|Grinding|Deburring|Polishing",
     alarmStartText2Structure: "ON|Mechanical failure|Electrical failure|Software failure",
     alarmStartText3Structure: "ON|", ...OFF,
   },
   {
-    statusRow: 4, statusName: "Materiales", statusEnabled: true, statusDetailsEnabled: 1, iconName: "fa fa-cubes",
+    statusRow: 4, statusName: "Materiales", statusNameZh: "物料", singleButtonOrder: 3, statusEnabled: true, statusDetailsEnabled: 1, iconName: "fa fa-cubes",
     alarmStartText1Structure: "OFF", alarmStartText2Structure: "OFF", alarmStartText3Structure: "ON", ...OFF,
   },
   {
     // The team leader belongs to production, so this slot stays disabled.
-    statusRow: 5, statusName: "Líder de equipo", statusEnabled: false, statusDetailsEnabled: 0, iconName: "fa fa-street-view",
+    statusRow: 5, statusName: "Líder de equipo", statusNameZh: "班组长", singleButtonOrder: 5, statusEnabled: false, statusDetailsEnabled: 0, iconName: "fa fa-street-view",
     alarmStartText1Structure: "OFF", alarmStartText2Structure: "OFF", alarmStartText3Structure: "OFF", ...OFF,
   },
 ];
@@ -43,11 +43,12 @@ const settings = [
   { settingId: 2, settingName: "Show workcenter name?", currentSetting: "Yes", possibleSettings: "Yes|No", defaultSetting: "Yes" },
   { settingId: 3, settingName: "Show only workcenters with alarms in Overivew?", currentSetting: "No", possibleSettings: "Yes|No", defaultSetting: "No" },
   { settingId: 5, settingName: "Seconds before a button press closes the alarm", currentSetting: "30", possibleSettings: "5-600", defaultSetting: "30" },
+  { settingId: 7, settingName: "Seconds to confirm a single-button call", currentSetting: "10", possibleSettings: "3-60", defaultSetting: "10" },
   { settingId: 6, settingName: "Minutes before an open alarm turns red", currentSetting: "5", possibleSettings: "1-240", defaultSetting: "5" },
   { settingId: 4, settingName: "Open alarms at shift change", currentSetting: "Keep open", possibleSettings: "Keep open|Close by system", defaultSetting: "Keep open" },
 ];
 
-const localization: { id: string; english: string; spanish: string; translation: string }[] = [
+const localization: { id: string; english: string; spanish: string; chinese?: string; translation: string }[] = [
   { id: "AddWorkcenter", english: "Add workcenter", spanish: "Agregar estación", translation: "Přidej pracoviště" },
   { id: "AlarmEndDate", english: "Ending Date", spanish: "Fecha final", translation: "Koncové datum" },
   { id: "AlarmEndTime", english: "Alarm End", spanish: "Fin de alarma", translation: "Konec alarmu" },
@@ -168,6 +169,26 @@ const shifts = [
   { id: 3, name: "3rd", startTime: "22:00", endTime: "06:00", days: "1,2,3,4,5" },
 ];
 
+// TV board texts are shown in Spanish and Chinese at the same time, whatever the UI language.
+const tvTexts: { id: string; english: string; spanish: string; chinese: string }[] = [
+  { id: "TV.AllClear", english: "NO OPEN ALARMS", spanish: "SIN ALARMAS ABIERTAS", chinese: "无报警" },
+  { id: "TV.StationsRunning", english: "stations running", spanish: "estaciones en operación", chinese: "个工位运行中" },
+  { id: "TV.Online", english: "ONLINE", spanish: "EN LÍNEA", chinese: "在线" },
+  { id: "TV.Offline", english: "NO CONNECTION", spanish: "SIN CONEXIÓN", chinese: "连接中断" },
+  { id: "TV.OfflineNote", english: "The information may be out of date", spanish: "La información puede no estar actualizada", chinese: "信息可能不是最新的" },
+  { id: "TV.GatewayDown", english: "BUTTONS NOT RESPONDING", spanish: "LOS BOTONES NO RESPONDEN", chinese: "按钮无响应" },
+  { id: "TV.OpenAlarms", english: "open", spanish: "abiertas", chinese: "个报警" },
+  { id: "TV.Stations", english: "stations", spanish: "est.", chinese: "工位" },
+  { id: "TV.Closed", english: "CLOSED", spanish: "CERRADA", chinese: "已解除" },
+  { id: "TV.Page", english: "Page", spanish: "Página", chinese: "页" },
+  // {n} = seconds left in the single-button countdown.
+  { id: "TV.SelectOpen", english: "CALL in {n} s", spanish: "ABRIR en {n} s", chinese: "{n}秒后呼叫" },
+  { id: "TV.SelectClose", english: "CLOSE in {n} s", spanish: "CERRAR en {n} s", chinese: "{n}秒后解除" },
+  { id: "TV.ScreenNotFound", english: "Screen not found", spanish: "Pantalla no encontrada", chinese: "未找到屏幕" },
+  { id: "TV.NoArea", english: "This screen has no area. Set it in Settings → Screens.", spanish: "Esta pantalla no tiene área asignada. Configúrala en Configuración → Pantallas.", chinese: "此屏幕未分配区域，请在设置中配置。" },
+];
+for (const text of tvTexts) localization.push({ ...text, translation: text.english });
+
 const configTexts: { id: string; english: string; spanish: string }[] = [
   { id: "AREAS", english: "AREAS", spanish: "ÁREAS" },
   { id: "Area", english: "Area", spanish: "Área" },
@@ -247,6 +268,7 @@ const configTexts: { id: string; english: string; spanish: string }[] = [
   { id: "Result_opened", english: "Opened", spanish: "Abrió" },
   { id: "Result_ignored", english: "Ignored (lockout)", spanish: "Ignorada (bloqueo)" },
   { id: "Result_closed", english: "Closed", spanish: "Cerró" },
+  { id: "Result_selected", english: "Selected (single button)", spanish: "Seleccionó (botón único)" },
   { id: "OpenedBy", english: "Opened by", spanish: "Abierta por" },
   { id: "ClosedBy", english: "Closed by", spanish: "Cerrada por" },
   { id: "State", english: "State", spanish: "Estado" },
@@ -266,6 +288,10 @@ const configTexts: { id: string; english: string; spanish: string }[] = [
   { id: "NoPressesYet", english: "No button presses yet", spanish: "Aún no hay pulsaciones" },
   { id: "WorkcenterNotFound", english: "Station not found", spanish: "Estación no encontrada" },
   { id: "StationPageNote", english: "Normal operation is with the physical buttons. Use this page when a button fails.", spanish: "La operación normal es con los botones físicos. Usa esta página cuando un botón falle." },
+  { id: "ChineseText", english: "Chinese text (TV)", spanish: "Texto en chino (TV)" },
+  { id: "AlarmTypeNameZh", english: "Name (Chinese)", spanish: "Nombre (chino)" },
+  { id: "SingleButtonOrder", english: "Single-button order", spanish: "Orden en botón único" },
+  { id: "SingleButtonDevice", english: "— Single button —", spanish: "— Botón único —" },
   { id: "NoButtonsYet", english: "No buttons configured yet", spanish: "Aún no hay botones configurados" },
   { id: "TranslateNeedsName", english: "Type the Spanish/English name first.", spanish: "Primero escribe el nombre en español/inglés." },
   { id: "AlarmDetailsNote", english: "Asked when an alarm is opened from a computer; physical buttons open without asking. Past alarms keep the option names they were saved with.", spanish: "Se piden al abrir una alarma desde la computadora; los botones físicos abren sin preguntar. Las alarmas pasadas conservan el nombre de opción con el que se guardaron." },
@@ -288,6 +314,12 @@ const configTexts: { id: string; english: string; spanish: string }[] = [
   { id: "TestButtons.SelectArea", english: "Area", spanish: "Área" },
   { id: "TestButtons.LastPress", english: "Last press", spanish: "Última pulsación" },
   { id: "TestButtons.NoPress", english: "No presses yet", spanish: "Sin pulsaciones" },
+  { id: "TestButtons.FourButtons", english: "4 buttons per station", spanish: "4 botones por estación" },
+  { id: "TestButtons.SingleButton", english: "Single button per station", spanish: "Botón único por estación" },
+  { id: "TestButtons.SingleHint", english: "Each press moves to the next department; the call confirms after the countdown. Choosing a department with an open call closes it.", spanish: "Cada pulsación pasa al siguiente departamento; el llamado se confirma al terminar la cuenta regresiva. Elegir un departamento con llamado abierto lo cierra." },
+  { id: "TestButtons.PressToCall", english: "Press to call", spanish: "Presiona para llamar" },
+  { id: "TestButtons.WillOpen", english: "Opens in", spanish: "Abre en" },
+  { id: "TestButtons.WillClose", english: "Closes in", spanish: "Cierra en" },
   // end TEST-BUTTONS
 ];
 for (const text of configTexts) {
@@ -295,7 +327,9 @@ for (const text of configTexts) {
 }
 
 async function main() {
-  await prisma.area.upsert({ where: { id: DEFAULT_AREA_ID }, update: {}, create: { id: DEFAULT_AREA_ID, name: "Área 1", sortOrder: 1 } });
+  await prisma.area.upsert({ where: { id: DEFAULT_AREA_ID }, update: {}, create: { id: DEFAULT_AREA_ID, name: "Área 1", nameZh: "区域 1", sortOrder: 1 } });
+  // The default area is created by a migration, so its Chinese name is filled here while still empty.
+  await prisma.area.updateMany({ where: { id: DEFAULT_AREA_ID, name: "Área 1", nameZh: "" }, data: { nameZh: "区域 1" } });
   for (const w of workcenters) {
     await prisma.workcenter.upsert({ where: { workcenterRow: w.workcenterRow }, update: {}, create: { ...w, areaId: DEFAULT_AREA_ID } });
   }
@@ -313,7 +347,8 @@ async function main() {
   // Databases seeded before Spanish existed may still point at the old "Translation" option.
   await prisma.settings.updateMany({ where: { settingName: "Language", currentSetting: { notIn: ["English", "Spanish"] } }, data: { currentSetting: "English" } });
   for (const l of localization) {
-    await prisma.localization.upsert({ where: { id: l.id }, update: { english: l.english, spanish: l.spanish }, create: l });
+    // Chinese is only overwritten for rows the seed provides it for, so edits to other rows survive.
+    await prisma.localization.upsert({ where: { id: l.id }, update: { english: l.english, spanish: l.spanish, ...(l.chinese ? { chinese: l.chinese } : {}) }, create: l });
   }
   console.log("Seed complete.");
 }

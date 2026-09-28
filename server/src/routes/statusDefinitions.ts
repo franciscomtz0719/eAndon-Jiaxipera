@@ -10,6 +10,8 @@ const rowParams = z.object({ statusRow: z.coerce.number().int().min(1).max(5) })
 
 const definitionBody = z.object({
   statusName: z.string().trim().min(1).max(50),
+  statusNameZh: z.string().trim().max(50),
+  singleButtonOrder: z.number().int().min(0).max(99),
   statusEnabled: z.boolean(),
   statusDetailsEnabled: z.number().int().min(0).max(3),
   iconName: z.string().trim().max(60).regex(/^[a-z0-9 -]*$/, "Expected Font Awesome classes, e.g. \"fa fa-cogs\""),
@@ -17,12 +19,14 @@ const definitionBody = z.object({
 
 statusDefinitionsRouter.patch("/status-definitions/:statusRow", asyncHandler(async (req, res) => {
   const { statusRow } = parse(rowParams, req.params);
-  const { statusName, statusEnabled, statusDetailsEnabled, iconName } = parse(definitionBody.partial(), req.body);
+  const { statusName, statusNameZh, singleButtonOrder, statusEnabled, statusDetailsEnabled, iconName } = parse(definitionBody.partial(), req.body);
 
   const updated = await prisma.statusDefinition.update({
     where: { statusRow },
     data: {
       ...(statusName !== undefined ? { statusName } : {}),
+      ...(statusNameZh !== undefined ? { statusNameZh } : {}),
+      ...(singleButtonOrder !== undefined ? { singleButtonOrder } : {}),
       ...(statusEnabled !== undefined ? { statusEnabled } : {}),
       ...(statusDetailsEnabled !== undefined ? { statusDetailsEnabled } : {}),
       ...(iconName !== undefined ? { iconName } : {}),

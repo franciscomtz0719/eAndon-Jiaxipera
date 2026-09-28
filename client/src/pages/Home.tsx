@@ -3,6 +3,7 @@ import { LayoutGrid } from "lucide-react";
 import { useAppData } from "../i18n";
 import { useOpenEvents } from "../lib/useOpenEvents";
 import { NO_AREA_PARAM } from "./AreaPage";
+import { BilingualName } from "../components/BilingualName";
 
 export function Home() {
   const { t, areas, workcenters } = useAppData();
@@ -10,9 +11,9 @@ export function Home() {
 
   const cards = areas
     .filter((area) => area.active)
-    .map((area) => ({ key: String(area.id), name: area.name, stations: workcenters.filter((wc) => wc.areaId === area.id) }));
+    .map((area) => ({ key: String(area.id), name: area.name, nameZh: area.nameZh, stations: workcenters.filter((wc) => wc.areaId === area.id) }));
   const unassigned = workcenters.filter((wc) => wc.areaId === null);
-  if (unassigned.length > 0) cards.push({ key: NO_AREA_PARAM, name: t("NoAreaLabel", "No area"), stations: unassigned });
+  if (unassigned.length > 0) cards.push({ key: NO_AREA_PARAM, name: t("NoAreaLabel", "No area"), nameZh: "", stations: unassigned });
 
   return (
     <div>
@@ -26,7 +27,7 @@ export function Home() {
                 <div>
                   <div className="wc-id">
                     <LayoutGrid size={14} style={{ marginRight: 4, verticalAlign: -2 }} />
-                    {card.name}
+                    <BilingualName name={card.name} nameZh={card.nameZh} />
                   </div>
                   <div className="wc-name">
                     {card.stations.length} {t("Stations", "Stations")}

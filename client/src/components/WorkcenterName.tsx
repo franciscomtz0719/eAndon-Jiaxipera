@@ -1,16 +1,13 @@
 import type { Workcenter } from "../lib/types";
+import { bilingualText } from "../lib/bilingual";
+import { BilingualName } from "./BilingualName";
+
+type Names = Pick<Workcenter, "workcenterName" | "workcenterNameZh">;
 
 /** Shows the workcenter name with its Chinese translation underneath. */
-export function WorkcenterName({ workcenter }: { workcenter: Pick<Workcenter, "workcenterName" | "workcenterNameZh"> }) {
-  return (
-    <span className="wc-name-bilingual">
-      <span>{workcenter.workcenterName}</span>
-      {workcenter.workcenterNameZh && <span className="wc-name-zh">{workcenter.workcenterNameZh}</span>}
-    </span>
-  );
+export function WorkcenterName({ workcenter }: { workcenter: Names }) {
+  return <BilingualName name={workcenter.workcenterName} nameZh={workcenter.workcenterNameZh} />;
 }
 
 /** Single-line form for places that can't hold markup, like <option> elements. */
-export function workcenterNameText(workcenter: Pick<Workcenter, "workcenterName" | "workcenterNameZh">) {
-  return workcenter.workcenterNameZh ? `${workcenter.workcenterName} / ${workcenter.workcenterNameZh}` : workcenter.workcenterName;
-}
+export const workcenterNameText = (workcenter: Names) => bilingualText(workcenter.workcenterName, workcenter.workcenterNameZh);

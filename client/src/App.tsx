@@ -9,10 +9,13 @@ import { StationPage } from "./pages/StationPage";
 import { Logs } from "./pages/Logs";
 import { Statistics } from "./pages/Statistics";
 import { Settings } from "./pages/Settings";
+import { TvBoard } from "./tv/TvBoard";
 import { TestButtonsPage } from "./testButtons/TestButtonsPage"; // TEST-BUTTONS: remove with module
 
 // A data router is required for useBlocker (unsaved-changes prompt in Settings).
 const router = createBrowserRouter([
+  // TV boards are full screen, outside the admin layout.
+  { path: "tv/:screenId", element: <TvBoard /> },
   {
     element: <Layout />,
     children: [

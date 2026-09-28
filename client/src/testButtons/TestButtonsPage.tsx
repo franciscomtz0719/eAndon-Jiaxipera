@@ -8,6 +8,8 @@ import { useOpenEvents, eventKey } from "../lib/useOpenEvents";
 import { useToast } from "../components/toastContext";
 import { WorkcenterName } from "../components/WorkcenterName";
 import { NO_AREA_PARAM } from "../pages/AreaPage";
+import { bilingualText } from "../lib/bilingual";
+import { SingleButtonPanels } from "./SingleButtonPanels";
 
 /*
  * TEMPORARY test module: imitates the physical button panels until the real buttons are installed.
@@ -33,9 +35,11 @@ export function TestButtonsPage() {
   const activeAreas = areas.filter((area) => area.active);
   const hasUnassigned = workcenters.some((wc) => wc.areaId === null);
   const areaOptions = [
-    ...activeAreas.map((area) => ({ value: String(area.id), label: area.name })),
+    ...activeAreas.map((area) => ({ value: String(area.id), label: bilingualText(area.name, area.nameZh) })),
     ...(hasUnassigned ? [{ value: NO_AREA_PARAM, label: t("NoAreaLabel", "No area") }] : []),
   ];
+  // Both button modes can be tried side by side for the demo.
+  const mode = searchParams.get("mode") === "single" ? "single" : "four";
   const requested = searchParams.get("area");
   const areaParam = areaOptions.some((o) => o.value === requested) ? requested : (areaOptions[0]?.value ?? null);
 
@@ -78,7 +82,7 @@ export function TestButtonsPage() {
       <div className="filters-bar" style={{ marginBottom: 16 }}>
         <label className="form-group" style={{ margin: 0 }}>
           {t("TestButtons.SelectArea", "Area")}
-          <select className="select" value={areaParam ?? ""} onChange={(e) => setSearchParams({ area: e.target.value }, { replace: true })}>
+          <select className="select" value={areaParam ?? ""} onChange={(e) => setSearchParams({ area: e.target.value, mode }, { replace: true })}>
             {areaOptions.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
@@ -86,12 +90,28 @@ export function TestButtonsPage() {
             ))}
           </select>
         </label>
+        <div className="mode-switch" role="tablist">
+          {(["four", "single"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              role="tab"
+              aria-selected={mode === m}
+              className={`mode-option${mode === m ? " active" : ""}`}
+              onClick={() => setSearchParams({ ...(areaParam ? { area: areaParam } : {}), mode: m }, { replace: true })}
+            >
+              {m === "four" ? t("TestButtons.FourButtons", "4 buttons per station") : t("TestButtons.SingleButton", "Single button per station")}
+            </button>
+          ))}
+        </div>
       </div>
 
       {stations.length === 0 ? (
         <div className="card" style={{ textAlign: "center", color: "var(--text-muted)" }}>
           {t("NoStationsInArea", "No stations in this area")}
         </div>
+      ) : mode === "single" ? (
+        <SingleButtonPanels stations={stations} />
       ) : (
         <div className="tiles-grid">
           {stations.map((wc) => {

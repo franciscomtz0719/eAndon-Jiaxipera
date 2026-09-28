@@ -2,10 +2,10 @@ import type { AlarmEvent } from "@prisma/client";
 import { prisma } from "./db.js";
 import { HttpError } from "./http.js";
 import { detailsProblem } from "./detailStructure.js";
-import { emitEventChanged } from "./realtime.js";
+import { emitEventChanged, emitSelectionChanged, type SelectionView } from "./realtime.js";
 
 export type PressSource = "button" | "simulated";
-export type PressResult = "opened" | "ignored" | "closed";
+export type PressResult = "opened" | "ignored" | "closed" | "selected";
 
 export const LOCKOUT_SETTING_ID = 5;
 const DEFAULT_LOCKOUT_SECONDS = 30;
@@ -150,5 +150,130 @@ export function closeFromComputer(eventId: number): Promise<AlarmEvent> {
     const event = await prisma.alarmEvent.update({ where: { id: eventId }, data: { state: "closed", closedAt: new Date(), closedBy: "computer" } });
     emitEventChanged(event);
     return event;
+  });
+}
+
+// ─── Single-button mode ──────────────────────────────────────────────────────────────────────────
+// One button per station: each press moves the selection to the next department (in
+// singleButtonOrder) and restarts the confirmation countdown. When the countdown ends without
+// another press, the call opens — or, if that department already has an open call, it closes.
+// Selections live in memory: a server restart during those seconds drops them (the operator presses again).
+
+export const SINGLE_CONFIRM_SETTING_ID = 7;
+const DEFAULT_SINGLE_CONFIRM_SECONDS = 10;
+
+interface Selection extends SelectionView {
+  source: PressSource;
+  timer: NodeJS.Timeout;
+}
+
+const selections = new Map<string, Selection>();
+
+const viewOf = ({ workcenterId, statusRow, action, expiresAt, pressCount }: Selection): SelectionView => ({ workcenterId, statusRow, action, expiresAt, pressCount });
+
+export function currentSelections(): SelectionView[] {
+  return [...selections.values()].map(viewOf);
+}
+
+async function singleConfirmSeconds(): Promise<number> {
+  const setting = await prisma.settings.findUnique({ where: { settingId: SINGLE_CONFIRM_SETTING_ID } });
+  const value = Number(setting?.currentSetting);
+  return Number.isInteger(value) && value > 0 ? value : DEFAULT_SINGLE_CONFIRM_SECONDS;
+}
+
+export function registerSinglePress(input: {
+  workcenterId: string;
+  source: PressSource;
+  deviceId?: number;
+  idempotencyKey?: string;
+}): Promise<{ result: "selected"; selection: SelectionView | null }> {
+  return serialized(async () => {
+    const current = selections.get(input.workcenterId);
+    // A retried press never counts twice; the selection may have been confirmed since.
+    if (input.idempotencyKey && (await prisma.buttonPress.findUnique({ where: { idempotencyKey: input.idempotencyKey } }))) {
+      return { result: "selected", selection: current ? viewOf(current) : null };
+    }
+
+    const workcenter = await prisma.workcenter.findUnique({ where: { workcenterId: input.workcenterId } });
+    if (!workcenter) throw new HttpError(404, "Workcenter not found");
+    const cycle = await prisma.statusDefinition.findMany({ where: { statusEnabled: true }, orderBy: [{ singleButtonOrder: "asc" }, { statusRow: "asc" }] });
+    if (cycle.length === 0) throw new HttpError(400, "No department is enabled");
+
+    const position = current ? cycle.findIndex((d) => d.statusRow === current.statusRow) : -1;
+    const department = cycle[(position + 1) % cycle.length]!;
+    const open = await findOpenEvent(input.workcenterId, department.statusRow);
+    const now = Date.now();
+    const seconds = await singleConfirmSeconds();
+
+    if (current) clearTimeout(current.timer);
+    const selection: Selection = {
+      workcenterId: input.workcenterId,
+      statusRow: department.statusRow,
+      action: open ? "close" : "open",
+      expiresAt: now + seconds * 1000,
+      pressCount: (current?.pressCount ?? 0) + 1,
+      source: input.source,
+      timer: setTimeout(() => {
+        confirmSelection(selection).catch((err) => console.error("Single-button confirm failed:", err));
+      }, seconds * 1000),
+    };
+    selections.set(input.workcenterId, selection);
+
+    await prisma.buttonPress.create({
+      data: {
+        deviceId: input.deviceId,
+        workcenterId: input.workcenterId,
+        statusRow: department.statusRow,
+        source: input.source,
+        pressedAt: new Date(now),
+        result: "selected",
+        eventId: open?.id,
+        idempotencyKey: input.idempotencyKey,
+      },
+    });
+
+    emitSelectionChanged(input.workcenterId, viewOf(selection));
+    return { result: "selected", selection: viewOf(selection) };
+  });
+}
+
+/**
+ * Countdown ended: open the selected department's call, or close it if it is already open.
+ * Only confirms the selection whose timer fired: a press queued just before it replaced the selection.
+ */
+function confirmSelection(expected: Selection): Promise<void> {
+  const { workcenterId } = expected;
+  return serialized(async () => {
+    const selection = selections.get(workcenterId);
+    if (selection !== expected) return;
+    selections.delete(workcenterId);
+    emitSelectionChanged(workcenterId, null);
+
+    const workcenter = await prisma.workcenter.findUnique({ where: { workcenterId } });
+    const department = await prisma.statusDefinition.findUnique({ where: { statusRow: selection.statusRow } });
+    if (!workcenter || !department) return;
+
+    // The open/closed state is checked again now: it may have changed from the computer meanwhile.
+    const open = await findOpenEvent(workcenterId, selection.statusRow);
+    const now = new Date();
+    const event = open
+      ? await prisma.alarmEvent.update({
+          where: { id: open.id },
+          data: { state: "closed", closedAt: now, closedBy: selection.source, pressCount: { increment: selection.pressCount }, lastPressAt: now },
+        })
+      : await prisma.alarmEvent.create({
+          data: {
+            workcenterId,
+            workcenterName: workcenter.workcenterName,
+            statusRow: department.statusRow,
+            departmentName: department.statusName,
+            state: "open",
+            openedAt: now,
+            openedBy: selection.source,
+            pressCount: selection.pressCount,
+            lastPressAt: now,
+          },
+        });
+    emitEventChanged(event);
   });
 }

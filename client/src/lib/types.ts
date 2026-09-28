@@ -9,6 +9,7 @@ export interface Workcenter {
 export interface Area {
   id: number;
   name: string;
+  nameZh: string;
   sortOrder: number;
   active: boolean;
 }
@@ -46,7 +47,8 @@ export interface Device {
   id: number;
   name: string;
   workcenterId: string;
-  statusRow: number;
+  /** null = single-button device: the department is chosen by pressing repeatedly. */
+  statusRow: number | null;
   modbusUnitId: number | null;
   registerAddress: number | null;
   readType: ReadType;
@@ -77,6 +79,9 @@ export interface DetailValues {
 export interface StatusDefinition {
   statusRow: number;
   statusName: string;
+  statusNameZh: string;
+  /** Position in the single-button cycle (each press moves to the next department). */
+  singleButtonOrder: number;
   statusEnabled: boolean;
   statusDetailsEnabled: number;
   iconName: string | null;
@@ -95,6 +100,7 @@ export interface Localization {
   id: string;
   english: string;
   spanish: string;
+  chinese: string;
   translation: string;
 }
 
@@ -142,7 +148,18 @@ export interface AlarmEvent {
   detailText: string | null;
 }
 
-export type PressResult = "opened" | "ignored" | "closed";
+export type PressResult = "opened" | "ignored" | "closed" | "selected";
+
+/** Single-button mode: a department being selected, confirmed when the countdown ends. */
+export interface Selection {
+  workcenterId: string;
+  statusRow: number;
+  /** Opens a call, or closes the one already open for that department. */
+  action: "open" | "close";
+  /** Epoch ms when the selection confirms. */
+  expiresAt: number;
+  pressCount: number;
+}
 
 export interface ButtonPress {
   id: number;

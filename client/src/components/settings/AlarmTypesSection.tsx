@@ -22,7 +22,7 @@ export function AlarmTypesSection() {
     reportSave(
       await drafts.save(
         // Whether details are asked for is edited in the alarm details section.
-        (def, { statusName, statusEnabled, iconName }) => api.updateStatusDefinition(def.statusRow, { statusName, statusEnabled, iconName: iconName ?? undefined }),
+        (def, { statusName, statusNameZh, singleButtonOrder, statusEnabled, iconName }) => api.updateStatusDefinition(def.statusRow, { statusName, statusNameZh, singleButtonOrder, statusEnabled, iconName: iconName ?? undefined }),
         (def) => def.statusName,
       ),
     );
@@ -41,7 +41,9 @@ export function AlarmTypesSection() {
           <thead>
             <tr>
               <th>{t("AlarmTypeName", "Alarm Type Name")}</th>
+              <th>{t("AlarmTypeNameZh", "Name (Chinese)")}</th>
               <th>{t("Enabled", "Enabled")}</th>
+              <th>{t("SingleButtonOrder", "Single-button order")}</th>
               <th>{t("AlarmTypeIcon", "Alarm Type Icon")}</th>
               <th></th>
             </tr>
@@ -55,7 +57,13 @@ export function AlarmTypesSection() {
                     <input value={def.statusName} onChange={(e) => drafts.edit(saved, { statusName: e.target.value })} />
                   </td>
                   <td>
+                    <input value={def.statusNameZh} onChange={(e) => drafts.edit(saved, { statusNameZh: e.target.value })} />
+                  </td>
+                  <td>
                     <input type="checkbox" checked={def.statusEnabled} onChange={(e) => drafts.edit(saved, { statusEnabled: e.target.checked })} />
+                  </td>
+                  <td>
+                    <input type="number" min={0} max={99} className="input-narrow" value={def.singleButtonOrder} onChange={(e) => drafts.edit(saved, { singleButtonOrder: Number(e.target.value) })} />
                   </td>
                   <td>
                     <input value={def.iconName ?? ""} className="input-short" onChange={(e) => drafts.edit(saved, { iconName: e.target.value })} />
